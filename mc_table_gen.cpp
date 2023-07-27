@@ -28,7 +28,123 @@ const uint8_t base_cases[15] = {
     v1 | v2 | v3 | v7,
 };
 
-int vertex_map[256] {};
+
+/** * Represents the edge list for each of the base cases.
+ * Will be used to calculate all 256 triangulations for quick lookup in the shader code.
+*/
+const uint8_t base_triangulations[15][12] {
+    { },
+    { 0, 4, 3 },
+    { 3, 1, 4,  1, 5, 4},
+    { 0, 4, 3,  5, 9, 8},
+    { 0, 4, 3,  6, 10, 9},
+    { 5, 6, 7,  5, 7, 3,  0, 5, 3},
+    { 3, 1, 4,  1, 5, 4,  6, 10, 9},
+    { 4, 8, 11,  0, 1, 5,  6, 10, 9},
+    { 4, 5, 7,  5, 6, 7},  // 8
+    { 0, 1, 6,  0, 6, 10,  0, 10, 4,  4, 10, 11},
+    { 0, 8, 3,  3, 8, 11,  1, 2, 9,  2, 10, 9},
+    { 0, 1, 9,  0, 9, 7,  7, 10, 9,  0, 4, 7},
+    { 4, 8, 11,  3, 5, 0,  3, 7, 5,  7, 6, 5},
+    { 0, 4, 3,  2, 6, 1,  5, 8, 9,  7, 11, 10},
+    { 3, 11, 0,  0, 5, 6,  0, 5, 11,  11, 6, 10}
+};
+
+const uint8_t base_triangulations_count[15] {
+    0,
+    3,
+    6,
+    6,
+    6,
+    9,
+    9,
+    9,
+    6,
+    12,
+    12,
+    12,
+    12,
+    12,
+    12,
+};
+
+uint8_t triangulations[256][12] {};
+
+/**
+ * Use this to convert the edge lists to their vertex coordinates.
+*/
+const float vertex_coords[12][3] {
+    {  0.0f, -0.5f,  0.5f },
+    {  0.5f, -0.5f,  0.0f },
+    {  0.0f, -0.5f, -0.5f },
+    { -0.5f, -0.5f,  0.0f },
+    { -0.5f,  0.0f,  0.5f },
+    {  0.5f,  0.0f,  0.5f },
+    {  0.5f,  0.0f, -0.5f },
+    { -0.5f,  0.0f, -0.5f },
+    {  0.0f,  0.5f,  0.5f },
+    {  0.5f,  0.5f,  0.0f },
+    {  0.0f,  0.5f, -0.5f },
+    { -0.5f,  0.5f,  0.0f }
+};
+
+const uint8_t edge_rotation_map_y[12] {
+    3,
+    0,
+    1,
+    2,
+
+    7,
+    4,
+    5,
+    6,
+
+    11,
+    8,
+    9,
+    10,
+};
+
+const uint8_t edge_rotation_map_x[12] {
+    2,
+    6,
+    10,
+    7,
+
+    3,
+    1,
+    9,
+    11,
+
+    0,
+    5,
+    8,
+    4,
+};
+
+const uint8_t edge_rotation_map_z[12] {
+    5,
+    9,
+    6,
+    1,
+
+    0,
+    8,
+    10,
+    2,
+
+    4,
+    11,
+    7,
+    3,
+};
+
+uint8_t vertex_map[256] {};
+
+/**
+ * Records the rotations per config.
+*/
+uint8_t rotation_map[256][3] {};
 
 const uint8_t upper = 0b1111'0000;
 const uint8_t lower = 0b0000'1111;
@@ -71,13 +187,22 @@ inline uint8_t cube_rotate_around_z(uint8_t code)
     return new_code;
 }
 
-int get_base_case_from_bits(uint8_t code)
+void get_base_case_from_bits(uint8_t code)
 {
-    int v_code = vertex_map[code];
-    if (v_code) return v_code; 
+    uint8_t code_copy = code;
 
-    v_code = vertex_map[!code];
-    if (v_code) return v_code;
+    int v_code = vertex_map[code];
+    if (v_code) return; 
+
+    uint8_t code_compliment = ~code;
+    v_code = vertex_map[code_compliment];
+    if (v_code) {
+        vertex_map[code] = v_code;
+        rotation_map[code][0] = rotation_map[code_compliment][0];
+        rotation_map[code][1] = rotation_map[code_compliment][1];
+        rotation_map[code][2] = rotation_map[code_compliment][2];
+        return;
+    }
 
     // handle the rotational symmetry
     for (int c = 0; c < 2; c++)
@@ -95,7 +220,15 @@ int get_base_case_from_bits(uint8_t code)
                 {
                     if (vertex_map[c_code])
                     {
-                        return vertex_map[c_code];
+                        if (code == 2)
+                        {
+                            std::cout << i << "," << j << "," << k << std::endl;
+                        }
+                        vertex_map[code_copy] = vertex_map[c_code];
+                        rotation_map[code_copy][0] = i;
+                        rotation_map[code_copy][1] = j;
+                        rotation_map[code_copy][2] = k;
+                        return;
                     }
                     c_code = cube_rotate_around_z(c_code);
                 }
@@ -110,19 +243,21 @@ int get_base_case_from_bits(uint8_t code)
     throw std::runtime_error("Could not find base case");
 }
 
-void gen_table()
+void update_triangulations(uint8_t code)
 {
-    for (auto i = 0; i < 15; i++)
-    {
-        vertex_map[base_cases[i]] = i;
-    }
+    uint8_t base_case_index = vertex_map[code];
+    uint8_t* rotations = rotation_map[code];
 
-    for (int i = 1; i < 255; i++)
+    const uint8_t* edge_list = base_triangulations[base_case_index];
+    const uint8_t edge_count = base_triangulations_count[base_case_index];
+    for (int edge_index = 0; edge_index < edge_count; edge_index++)
     {
-        //std::cout << "Looking for " << std::to_string(i) << "  : " << std::endl;
-        int base_case = get_base_case_from_bits(i);
-        //std::cout << " :: found -> " << base_case << std::endl;
-        vertex_map[i] = base_case;
+        uint8_t edge = edge_list[edge_index];
+        for (int i = 0; i < rotations[0]; i++) edge = edge_rotation_map_y[edge];
+        for (int i = 0; i < rotations[1]; i++) edge = edge_rotation_map_x[edge];
+        for (int i = 0; i < rotations[2]; i++) edge = edge_rotation_map_z[edge];
+
+        triangulations[code][edge_index] = edge;
     }
 }
 
@@ -132,9 +267,41 @@ void print_map_debug()
     for (int i = 0; i < 256; i++)
     {
         std::bitset<8> bs(i);
-        std::cout << i << " :: " << vertex_map[i] << " --- " << bs;
+        std::cout << i << " :: " << (int) vertex_map[i] << " --- " << bs;
         std::cout << std::endl;
     }
+}
+
+void print_tri_debug()
+{
+    for (int i = 0; i < 256; i++)
+    {
+        std::cout << i << " ::: " << (int) rotation_map[i][0] << "," << (int) rotation_map[i][1] << "," << (int) rotation_map[i][2] << " :=:";
+        for (auto edge : triangulations[i])
+        {
+            std::cout << (int) edge << ", ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void gen_table()
+{
+    for (auto i = 0; i < 15; i++)
+    {
+        vertex_map[base_cases[i]] = i;
+    }
+
+    for (int i = 1; i < 255; i++)
+    {
+        get_base_case_from_bits(i);
+    }
+
+    for (int i = 1; i < 255; i++)
+    {
+        update_triangulations(i);
+    }
+
 }
 
 void print_array()
@@ -142,7 +309,7 @@ void print_array()
     std::cout << "{";
     for (int i = 0; i < 256; i++)
     {
-        std::cout << vertex_map[i] << "," << std::endl;
+        std::cout << (int) vertex_map[i] << "," << std::endl;
     }
     std::cout << std::endl;
 }
