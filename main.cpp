@@ -56,6 +56,8 @@ int main() {
 		return -1;
 	}
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	//Creating array for marching cube triangulation to render
 	std::vector<float> cubeVector = getVertices(11);
 	float vertexBufferData[cubeVector.size()];
