@@ -1,9 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "cube.h"
 #include "shader_s.h"
 #include "camera.h"
+#include "mc_table_gen.cpp"
+#include <vector>
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -55,25 +56,27 @@ int main() {
 		return -1;
 	}
 
+	//Creating array for marching cube triangulation to render
+	std::vector<float> cubeVector = getVertices(11);
+	float vertexBufferData[cubeVector.size()];
+	std::copy(cubeVector.begin(), cubeVector.end(), vertexBufferData);
 	unsigned int VBO;
-        unsigned int VAO;
+    unsigned int VAO;
 
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER,VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(myVertices), myVertices, GL_STATIC_DRAW);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER,VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
-        glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
 	Shader shader("vertex.vs", "fragment.fs");
 	shader.use();
-
-	
 
 	while(!glfwWindowShouldClose(window)) {
 
@@ -95,7 +98,7 @@ int main() {
 		shader.setMat4("view", view);
 		
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, cubeVector.size());
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();

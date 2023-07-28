@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 const uint8_t v0 = 1;
 const uint8_t v1 = v0 << 1;
@@ -86,6 +87,18 @@ const float vertex_coords[12][3] {
     {  0.5f,  0.5f,  0.0f },
     {  0.0f,  0.5f, -0.5f },
     { -0.5f,  0.5f,  0.0f }
+};
+
+std::vector<float> getVertices(uint8_t index) {
+    std::vector<float> vertices;
+    uint8_t veretxCount = base_triangulations_count[index];
+    for (int i=0; i < veretxCount; i++) {
+        uint8_t edge = base_triangulations[index][i];
+        for (float vertex: vertex_coords[edge]) {
+            vertices.push_back(vertex);
+        }
+    }
+    return vertices;
 };
 
 const uint8_t edge_rotation_map_y[12] {
