@@ -89,18 +89,6 @@ const float vertex_coords[12][3] {
     { -0.5f,  0.5f,  0.0f }
 };
 
-std::vector<float> getVertices(uint8_t index) {
-    std::vector<float> vertices;
-    uint8_t veretxCount = base_triangulations_count[index];
-    for (int i=0; i < veretxCount; i++) {
-        uint8_t edge = base_triangulations[index][i];
-        for (float vertex: vertex_coords[edge]) {
-            vertices.push_back(vertex);
-        }
-    }
-    return vertices;
-};
-
 const uint8_t edge_rotation_map_y[12] {
     3,
     0,
@@ -158,6 +146,22 @@ uint8_t vertex_map[256] {};
  * Records the rotations per config.
 */
 uint8_t rotation_map[256][3] {};
+
+std::vector<float> getVertices(uint8_t config_index) {
+	uint8_t base_case_index = vertex_map[config_index];
+	uint8_t vertex_count = base_triangulations_count[base_case_index];
+	uint8_t* elements = (triangulations[config_index]);
+
+    std::vector<float> vertices;
+    for (int i=0; i < vertex_count; i++) {
+        uint8_t edge = elements[i];
+        for (float vertex: vertex_coords[edge]) {
+            vertices.push_back(vertex);
+        }
+    }
+    return vertices;
+};
+
 
 const uint8_t upper = 0b1111'0000;
 const uint8_t lower = 0b0000'1111;

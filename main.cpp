@@ -26,6 +26,32 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+uint8_t config_num = 1;
+std::vector<float> cubeVector(12);
+GLuint mVAO;
+
+GLuint createBuffers()
+{
+	//Creating array for marching cube triangulation to render
+	cubeVector = getVertices(config_num);
+	float vertexBufferData[cubeVector.size()];
+	std::copy(cubeVector.begin(), cubeVector.end(), vertexBufferData);
+	unsigned int VBO; 
+    unsigned int VAO;
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER,VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+	return VAO;
+}
+
 int main() {
 	
 	glfwInit();
@@ -55,25 +81,10 @@ int main() {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+	gen_table();
+	mVAO = createBuffers();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	//Creating array for marching cube triangulation to render
-	std::vector<float> cubeVector = getVertices(11);
-	float vertexBufferData[cubeVector.size()];
-	std::copy(cubeVector.begin(), cubeVector.end(), vertexBufferData);
-	unsigned int VBO;
-    unsigned int VAO;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER,VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -99,7 +110,7 @@ int main() {
 		glm::mat4 view = camera.GetViewMatrix();
 		shader.setMat4("view", view);
 		
-		glBindVertexArray(VAO);
+		glBindVertexArray(mVAO);
 		glDrawArrays(GL_TRIANGLES, 0, cubeVector.size());
 		
 		glfwSwapBuffers(window);
@@ -120,6 +131,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
+uint32_t lastChangeTime = 0;
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -133,6 +145,14 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && lastChangeTime == 0)
+	{
+		config_num += 1;
+		mVAO = createBuffers();
+		lastChangeTime = 15;
+	}
+
+	if (lastChangeTime) lastChangeTime -= 1;
 }
 
 // glfw: whenever the mouse moves, this callback is called
