@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 const float RESOLUTION = 100.0f;
-const float UNIT_SIZE = 0.01f;
+const float UNIT_SIZE = 1.0f / 16.0f;
 
 const unsigned int NUM_BOX_X = (unsigned int) RESOLUTION;
 const unsigned int NUM_BOX_Y = (unsigned int) RESOLUTION;
@@ -29,20 +29,20 @@ std::vector<float> vertices;
 
 glm::vec4 cubePositions[8] = {
 	//bottom vertices
-	glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f),
-	glm::vec4(1.0f, -1.0f, -1.0f, 1.0f),
-	glm::vec4(1.0f, -1.0f, 1.0f, 1.0f),
-	glm::vec4(-1.0f, -1.0f, 1.0f, 1.0f),
+	glm::vec4(-0.5f, -0.5f, 0.5f, 1.0f),
+	glm::vec4(0.5f, -0.5f, 0.5f, 1.0f),
+	glm::vec4(0.5f, -0.5f, -0.5f, 1.0f),
+	glm::vec4(-0.5f, -0.5f, -0.5f, 1.0f),
 	//Top vertices
-	glm::vec4(-1.0f, 1.0f, -1.0f, 1.0f),
-	glm::vec4(1.0f, 1.0f, -1.0f, 1.0f),
-	glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
-	glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f),
+	glm::vec4(-0.5f, 0.5f, 0.5f, 1.0f),
+	glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+	glm::vec4(0.5f, 0.5f, -0.5f, 1.0f),
+	glm::vec4(-0.5f, 0.5f, -0.5f, 1.0f),
 };
 
 // Abstract to an object so we can have other shapes
 bool isInSphere(glm::vec3 vertex) {
-	return glm::length(vertex) < 0.25f;
+	return glm::length(vertex) < 1.0f;
 };
 
 
@@ -50,15 +50,15 @@ bool isInSphere(glm::vec3 vertex) {
 GLuint createSphereBuffer() {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	int item_count = 0;
-	for(float x=-1.0f; x<1.0f; x+=UNIT_SIZE) {
-		for(float y=-1.0f; y<1.0f; y+=UNIT_SIZE) {
-			for(float z=-1.0f; z<1.0f; z+=UNIT_SIZE) {
+	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
+		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
+			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
 				for (glm::vec4 cvertex: cubePositions) {
 					glm::vec4 newPos = translate * scale * cvertex;
-					if (isInSphere(glm::vec3(newPos.x, newPos.y, newPos.z))) {
+					if (!isInSphere(glm::vec3(newPos.x, newPos.y, newPos.z))) {
 						code |= curr_vertex;
 					}
 					curr_vertex = curr_vertex << 1;
@@ -213,7 +213,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 uint32_t lastChangeTime = 0;
 void processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

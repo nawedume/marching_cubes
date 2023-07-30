@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <set>
 
 const uint8_t v0 = 1;
 const uint8_t v1 = v0 << 1;
@@ -28,7 +29,6 @@ const uint8_t base_cases[15] = {
     v0 | v2 | v5 | v7,
     v1 | v2 | v3 | v7,
 };
-
 
 /** * Represents the edge list for each of the base cases.
  * Will be used to calculate all 256 triangulations for quick lookup in the shader code.
@@ -235,17 +235,17 @@ void get_base_case_from_bits(uint8_t code)
                 c_code = b_code;
                 for (int k = 0; k < 4; k++)
                 {
-                    if (vertex_map[c_code])
+                    // Match on base cases to get exact rotation needed
+                    for (int w = 0; w  < 15; w++)
                     {
-                        if (code == 2)
+                        if (base_cases[w] == c_code)
                         {
-                            std::cout << i << "," << j << "," << k << std::endl;
+                            vertex_map[code_copy] = w;
+                            rotation_map[code_copy][0] = i;
+                            rotation_map[code_copy][1] = j;
+                            rotation_map[code_copy][2] = k;
+                            return;
                         }
-                        vertex_map[code_copy] = vertex_map[c_code];
-                        rotation_map[code_copy][0] = i;
-                        rotation_map[code_copy][1] = j;
-                        rotation_map[code_copy][2] = k;
-                        return;
                     }
                     c_code = cube_rotate_around_z(c_code);
                 }
@@ -270,9 +270,9 @@ void update_triangulations(uint8_t code)
     for (int edge_index = 0; edge_index < edge_count; edge_index++)
     {
         uint8_t edge = edge_list[edge_index];
-        for (int i = 0; i < rotations[0]; i++) edge = edge_rotation_map_y[edge];
-        for (int i = 0; i < rotations[1]; i++) edge = edge_rotation_map_x[edge];
         for (int i = 0; i < rotations[2]; i++) edge = edge_rotation_map_z[edge];
+        for (int i = 0; i < rotations[1]; i++) edge = edge_rotation_map_x[edge];
+        for (int i = 0; i < rotations[0]; i++) edge = edge_rotation_map_y[edge];
 
         triangulations[code][edge_index] = edge;
     }
