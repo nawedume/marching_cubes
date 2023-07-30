@@ -173,7 +173,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-uint8_t config_num = 1;
+uint8_t config_num = 32	;
 std::vector<float> cubeVector(12);
 
 GLuint createBuffers()
@@ -237,8 +237,11 @@ int main() {
 	Shader shader("vertex.vs", "fragment.fs");
 	shader.use();
 
+	std::cout << "--------" << std::endl;
+
 	std::cout << camera.Position.x << camera.Position.y << camera.Position.z << std::endl;
 
+	GLuint bf = createBuffers();
 	while(!glfwWindowShouldClose(window)) {
 
 		float currentFrame = static_cast<float>(glfwGetTime());
@@ -258,20 +261,26 @@ int main() {
 		glm::mat4 view = camera.GetViewMatrix();
 		shader.setMat4("view", view);
 		
-		shader.setVec3("uColor", glm::vec3(0.0, 1.0, 0.0));
-		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-		glBindVertexArray(vaos.gridVao);
-		glDrawElements(GL_TRIANGLES, vaos.numOfGridElements, GL_UNSIGNED_INT, nullptr);
 		
-		shader.setVec3("uColor", glm::vec3(1.0, 0.0, 0.0));
+		//glBindVertexArray(bf);
+		//shader.setVec3("uColor", glm::vec3(1.0, 1.0, 0.0));
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		//shader.setVec3("uColor", glm::vec3(0.0, 1.0, 0.0));
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+		//glBindVertexArray(vaos.gridVao);
+		//glDrawElements(GL_TRIANGLES, vaos.numOfGridElements, GL_UNSIGNED_INT, nullptr);
+		
+		shader.setVec3("uColor", glm::vec3(0.0, 1.0, 0.0));
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glBindVertexArray(vaos.objVao);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
-		shader.setVec3("uColor", glm::vec3(1.0, 0.0, 1.0));
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glBindVertexArray(vaos.objVao);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//shader.setVec3("uColor", glm::vec3(1.0, 0.0, 1.0));
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glBindVertexArray(vaos.objVao);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();

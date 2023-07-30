@@ -152,6 +152,14 @@ std::vector<float> getVertices(uint8_t config_index) {
 	uint8_t vertex_count = base_triangulations_count[base_case_index];
 	uint8_t* elements = (triangulations[config_index]);
 
+    for (int i = 0; i < vertex_count; i++)
+    {
+        std::cout << (int) elements[i] << ", ";
+    }
+
+    std::cout << std::endl;
+
+
     std::vector<float> vertices;
     for (int i=0; i < vertex_count; i++) {
         uint8_t edge = elements[i];
@@ -237,14 +245,16 @@ void get_base_case_from_bits(uint8_t code)
                 {
                     if (vertex_map[c_code])
                     {
-                        if (code == 2)
+                        if (code == 32)
                         {
-                            std::cout << i << "," << j << "," << k << std::endl;
+                            std::cout << "AA" << std::endl;
+                            std::cout << i << "," << j <<"," << k<< std::endl;
+                            std::cout << (int) vertex_map[c_code] << std::endl;
                         }
                         vertex_map[code_copy] = vertex_map[c_code];
-                        rotation_map[code_copy][0] = i;
-                        rotation_map[code_copy][1] = j;
-                        rotation_map[code_copy][2] = k;
+                        rotation_map[code_copy][0] = i + rotation_map[c_code][0];
+                        rotation_map[code_copy][1] = j + rotation_map[c_code][1];
+                        rotation_map[code_copy][2] = k + rotation_map[c_code][2];
                         return;
                     }
                     c_code = cube_rotate_around_z(c_code);
@@ -277,7 +287,6 @@ void update_triangulations(uint8_t code)
         triangulations[code][edge_index] = edge;
     }
 }
-
 #include <bitset>
 void print_map_debug()
 {
@@ -330,3 +339,17 @@ void print_array()
     }
     std::cout << std::endl;
 }
+
+
+#ifdef TDEBUG
+int main()
+{
+    gen_table();
+    uint8_t* rotations = rotation_map[32];
+    std::cout << "r: " << (int) rotations[0] << ", " << (int) rotations[1] << ", " << (int) rotations[2] << std::endl;
+
+    uint8_t f = cube_rotate_around_z(32);
+    std::cout << (int) f << std::endl;
+    return 0;
+}
+#endif
