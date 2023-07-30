@@ -152,12 +152,12 @@ std::vector<float> getVertices(uint8_t config_index) {
 	uint8_t vertex_count = base_triangulations_count[base_case_index];
 	uint8_t* elements = (triangulations[config_index]);
 
-    for (int i = 0; i < vertex_count; i++)
-    {
-        std::cout << (int) elements[i] << ", ";
-    }
+    //for (int i = 0; i < vertex_count; i++)
+    //{
+        //std::cout << (int) elements[i] << ", ";
+    //}
 
-    std::cout << std::endl;
+    //std::cout << std::endl;
 
 
     std::vector<float> vertices;
@@ -243,19 +243,17 @@ void get_base_case_from_bits(uint8_t code)
                 c_code = b_code;
                 for (int k = 0; k < 4; k++)
                 {
-                    if (vertex_map[c_code])
+                    for (int w = 0; w < 15; w++)
                     {
-                        if (code == 32)
+                        uint8_t base_case = base_cases[w];
+                        if (c_code == base_case)
                         {
-                            std::cout << "AA" << std::endl;
-                            std::cout << i << "," << j <<"," << k<< std::endl;
-                            std::cout << (int) vertex_map[c_code] << std::endl;
+                            vertex_map[code_copy] = w;
+                            rotation_map[code_copy][0] = i;
+                            rotation_map[code_copy][1] = j;
+                            rotation_map[code_copy][2] = k;
+                            return;
                         }
-                        vertex_map[code_copy] = vertex_map[c_code];
-                        rotation_map[code_copy][0] = i + rotation_map[c_code][0];
-                        rotation_map[code_copy][1] = j + rotation_map[c_code][1];
-                        rotation_map[code_copy][2] = k + rotation_map[c_code][2];
-                        return;
                     }
                     c_code = cube_rotate_around_z(c_code);
                 }
@@ -280,9 +278,9 @@ void update_triangulations(uint8_t code)
     for (int edge_index = 0; edge_index < edge_count; edge_index++)
     {
         uint8_t edge = edge_list[edge_index];
-        for (int i = 0; i < rotations[0]; i++) edge = edge_rotation_map_y[edge];
-        for (int i = 0; i < rotations[1]; i++) edge = edge_rotation_map_x[edge];
         for (int i = 0; i < rotations[2]; i++) edge = edge_rotation_map_z[edge];
+        for (int i = 0; i < rotations[1]; i++) edge = edge_rotation_map_x[edge];
+        for (int i = 0; i < rotations[0]; i++) edge = edge_rotation_map_y[edge];
 
         triangulations[code][edge_index] = edge;
     }
@@ -340,16 +338,38 @@ void print_array()
     std::cout << std::endl;
 }
 
+void print_val(uint8_t v)
+{
+    std::bitset<8> bs(v);
+    std::cout<< bs << std::endl;
+}
+
+//#define TDEBUG
 
 #ifdef TDEBUG
 int main()
 {
     gen_table();
-    uint8_t* rotations = rotation_map[32];
+    uint8_t val = 5;
+    print_val(val);
+    uint8_t* rotations = rotation_map[val];
+    std::cout << "==";
+    std::cout << (int) vertex_map[val] << std::endl;
     std::cout << "r: " << (int) rotations[0] << ", " << (int) rotations[1] << ", " << (int) rotations[2] << std::endl;
 
-    uint8_t f = cube_rotate_around_z(32);
-    std::cout << (int) f << std::endl;
+    //uint8_t basev = ~base_cases[vertex_map[val]];
+    //print_val(basev);
+
+    uint8_t f = cube_rotate_around_x(val);
+    print_val(f);
+    f = cube_rotate_around_z(f);
+    print_val(f);
+    
+    std::vector<float> vertices = getVertices(val);
+    for (int i = 0; i < vertices.size(); i+= 3)
+    {
+        std::cout << vertices[i] << ", " << vertices[i+1] << ", " << vertices[i+2] << std::endl;
+    }
     return 0;
 }
 #endif

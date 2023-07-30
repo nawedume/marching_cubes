@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 const float RESOLUTION = 100.0f;
-const float UNIT_SIZE = 1.0f;
+const float UNIT_SIZE = 0.1f;
 
 const unsigned int NUM_BOX_X = (unsigned int) RESOLUTION;
 const unsigned int NUM_BOX_Y = (unsigned int) RESOLUTION;
@@ -53,17 +53,15 @@ struct VAOs {
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
 VAOs createSphereBuffer() {
-	std::cout << glm::length(glm::vec3(0.5f, 0.5f, 0.5f)) << std::endl;
-
 	std::vector<float> cubeVerticesBuffer;
 	std::vector<unsigned int> cubeElementBuffer;
 
 	float cubeWidth = UNIT_SIZE ;
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	int item_count = 0;
-	for(float x=-1.0f; x<=1.0f; x+=cubeWidth) {
-		for(float y=-1.0f; y<=1.0f; y+=cubeWidth) {
-			for(float z=-1.0f; z<=1.0f; z+=cubeWidth) {
+	for(float x=-1.1f; x<=1.1f; x+=cubeWidth) {
+		for(float y=-1.1f; y<=1.1f; y+=cubeWidth) {
+			for(float z=-1.1f; z<=1.1f; z+=cubeWidth) {
 				int start_el = (cubeVerticesBuffer.size() / 3);
 				int start_v = cubeVerticesBuffer.size();
 				uint8_t code = 0;
@@ -76,7 +74,7 @@ VAOs createSphereBuffer() {
 					cubeVerticesBuffer.push_back(newPos.z);
 
 					float len = glm::length(glm::vec3(newPos.x, newPos.y, newPos.z));
-					std::cout << "(" << newPos.x << ", " << newPos.y << ", " << newPos.z << ") --> " << len << ":" << std::endl;
+					//std::cout << "(" << newPos.x << ", " << newPos.y << ", " << newPos.z << ") --> " << len << ":" << std::endl;
 					
 					if (!isInSphere(glm::vec3(newPos.x, newPos.y, newPos.z))) {
 						code |= curr_vertex;
@@ -108,12 +106,8 @@ VAOs createSphereBuffer() {
 				cubeElementBuffer.push_back(start_el + 1); cubeElementBuffer.push_back(start_el + 6); cubeElementBuffer.push_back(start_el + 5);
 
 
-				for (int i = start_v; i < start_v + 24; i += 3)
-				{
-					float len = glm::length(glm::vec3(cubeVerticesBuffer[i], cubeVerticesBuffer[i+1], cubeVerticesBuffer[i+2]));
-			//		std::cout << "(" << cubeVerticesBuffer[i] << ", " << cubeVerticesBuffer[i+1] << ", " << cubeVerticesBuffer[i+2] << ") --> " << len << std::endl;
-				}
-				std::cout << "(" << x << ", " << y << ", " << z << ") --> " << (int) code << std::endl;
+				std::bitset<8> bs(code);
+				std::cout << "(" << x << ", " << y << ", " << z << ") --> " << (int) code << " :: " << bs << std::endl;
 				std::vector<float> unitVertices = getVertices(code);
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
@@ -173,10 +167,9 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-uint8_t config_num = 32	;
 std::vector<float> cubeVector(12);
 
-GLuint createBuffers()
+GLuint createBuffers(uint8_t config_num)
 {
 	//Creating array for marching cube triangulation to render
 	cubeVector = getVertices(config_num);
@@ -197,6 +190,9 @@ GLuint createBuffers()
 
 	return VAO;
 }
+
+uint8_t gval = 1;
+GLuint bf;
 
 int main() {
 	
@@ -241,7 +237,7 @@ int main() {
 
 	std::cout << camera.Position.x << camera.Position.y << camera.Position.z << std::endl;
 
-	GLuint bf = createBuffers();
+	bf = createBuffers(gval);
 	while(!glfwWindowShouldClose(window)) {
 
 		float currentFrame = static_cast<float>(glfwGetTime());
@@ -265,22 +261,22 @@ int main() {
 		//glBindVertexArray(bf);
 		//shader.setVec3("uColor", glm::vec3(1.0, 1.0, 0.0));
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		//shader.setVec3("uColor", glm::vec3(0.0, 1.0, 0.0));
+		//shader.setVec3("uColor", glm::vec3(1.0, 1.0, 0.0));
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 		//glBindVertexArray(vaos.gridVao);
 		//glDrawElements(GL_TRIANGLES, vaos.numOfGridElements, GL_UNSIGNED_INT, nullptr);
 		
 		shader.setVec3("uColor", glm::vec3(0.0, 1.0, 0.0));
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glBindVertexArray(vaos.objVao);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
 		//shader.setVec3("uColor", glm::vec3(1.0, 0.0, 1.0));
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		//glBindVertexArray(vaos.objVao);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawArrays(GL_TRIANGLES, 130, 6);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -314,12 +310,12 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-	//if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && lastChangeTime == 0)
-	//{
-		//config_num += 1;
-		//mVAO = createBuffers();
-		//lastChangeTime = 15;
-	//}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && lastChangeTime == 0)
+	{
+		gval += 1;
+		bf = createBuffers(gval);
+		lastChangeTime = 15;
+	}
 
 	if (lastChangeTime) lastChangeTime -= 1;
 }
