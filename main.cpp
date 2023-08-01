@@ -18,12 +18,8 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const float RESOLUTION = 100.0f;
 const float UNIT_SIZE = 1.0f / 32.0f;
 
-const unsigned int NUM_BOX_X = (unsigned int) RESOLUTION;
-const unsigned int NUM_BOX_Y = (unsigned int) RESOLUTION;
-const unsigned int NUM_BOX_Z = (unsigned int) RESOLUTION;
 
 std::vector<float> vertices;
 
