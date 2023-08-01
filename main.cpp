@@ -41,13 +41,15 @@ glm::vec4 cubePositions[8] = {
 };
 
 // Abstract to an object so we can have other shapes
-bool isInSphere(glm::vec3 vertex) {
-	return glm::length(vertex) < 1.0f;
-};
 
 float distanceToSphere(glm::vec3 vertex) {
 	return glm::length(vertex) - 1.0f;
 };
+
+bool isInSphere(glm::vec3 vertex) {
+	return distanceToSphere(vertex) < 0.0f;
+};
+
 
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
@@ -61,7 +63,7 @@ GLuint createSphereBuffer() {
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
 				for (glm::vec4 cvertex: cubePositions) {
 					glm::vec4 newPos = translate * scale * cvertex;
-					if (!isInSphere(glm::vec3(newPos.x, newPos.y, newPos.z))) {
+					if (!isInSphere(newPos)) {
 						code |= curr_vertex;
 					}
 					curr_vertex = curr_vertex << 1;
@@ -71,9 +73,9 @@ GLuint createSphereBuffer() {
 					for (int i=0; i < unitVertices.size(); i+=3) {
 						glm::vec4 newVertexAdjustment = glm::vec4(0.5f - abs(unitVertices[i]), 0.5f - abs(unitVertices[i+1]), 0.5f - abs(unitVertices[i+2]), 1.0f);
 						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
-						float distance = distanceToSphere(tri_v);
+						float distance = distanceToSphere(glm::vec3(tri_v.x, tri_v.y, tri_v.z));
 						while (abs(distance) > 0.001f) {
-							distance = distanceToSphere(tri_v);
+							distance = distanceToSphere(glm::vec3(tri_v.x, tri_v.y, tri_v.z));
 							tri_v -= distance*(translate*newVertexAdjustment);
 						}
 						vertices.push_back(tri_v.x);
