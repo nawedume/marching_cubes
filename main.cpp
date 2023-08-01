@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 const float RESOLUTION = 100.0f;
-const float UNIT_SIZE = 1.0f / 16.0f;
+const float UNIT_SIZE = 1.0f / 32.0f;
 
 const unsigned int NUM_BOX_X = (unsigned int) RESOLUTION;
 const unsigned int NUM_BOX_Y = (unsigned int) RESOLUTION;
@@ -45,11 +45,14 @@ bool isInSphere(glm::vec3 vertex) {
 	return glm::length(vertex) < 1.0f;
 };
 
+float distanceToSphere(glm::vec3 vertex) {
+	return glm::length(vertex) - 1.0f;
+};
+
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
 GLuint createSphereBuffer() {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
-	int item_count = 0;
 	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
 		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
 			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
@@ -66,17 +69,22 @@ GLuint createSphereBuffer() {
 				std::vector<float> unitVertices = getVertices(code);
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
+						glm::vec4 newVertexAdjustment = glm::vec4(0.5f - abs(unitVertices[i]), 0.5f - abs(unitVertices[i+1]), 0.5f - abs(unitVertices[i+2]), 1.0f);
 						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
-						item_count += 3;
+						float distance = distanceToSphere(tri_v);
+						while (abs(distance) > 0.001f) {
+							distance = distanceToSphere(tri_v);
+							tri_v -= distance*(translate*newVertexAdjustment);
+						}
 						vertices.push_back(tri_v.x);
 						vertices.push_back(tri_v.y);
 						vertices.push_back(tri_v.z);
 					}
-
 				}
 			}
 		}		
 	}
+
 	float vertexBufferData[vertices.size()];
 	std::copy(vertices.begin(), vertices.end(), vertexBufferData);
 	unsigned int VBO; 
@@ -163,7 +171,7 @@ int main() {
 
 	mVAO = createSphereBuffer();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -227,7 +235,6 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && lastChangeTime == 0)
 	{
 		config_num += 1;
-		mVAO = createBuffers();
 		lastChangeTime = 15;
 	}
 
