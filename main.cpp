@@ -39,7 +39,7 @@ glm::vec4 cubePositions[8] = {
 // Abstract to an object so we can have other shapes
 
 float distanceToSphere(glm::vec3 vertex) {
-	return sin(vertex.x*3.14) + cos(vertex.y * 6) - vertex.y;
+	return glm::length(vertex) - 2.0f;
 };
 
 bool isInSphere(glm::vec3 vertex) {
@@ -82,8 +82,6 @@ GLuint createSphereBuffer() {
 		}		
 	}
 
-	float vertexBufferData[vertices.size()];
-	std::copy(vertices.begin(), vertices.end(), vertexBufferData);
 	unsigned int VBO; 
     unsigned int VAO;
 
@@ -92,7 +90,7 @@ GLuint createSphereBuffer() {
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
