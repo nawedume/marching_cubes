@@ -51,29 +51,28 @@ bool isInSphere(glm::vec3 vertex) {
 //Unoptimized and glitchy, can create spheres-like object with the current configs
 GLuint createSphereBuffer() {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
+	float corner_values[8];
 	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
 		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
 			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
-				for (glm::vec4 cvertex: cubePositions) {
+				for (int i = 0; i < 8; i++) {
+					glm::vec4 cvertex = cubePositions[i];
 					glm::vec4 newPos = translate * scale * cvertex;
-					if (!isInSphere(newPos)) {
+					float distance = distanceToSphere(newPos);
+					corner_values[i] = distance;
+
+					if (distance < 0.0f) {
 						code |= curr_vertex;
 					}
 					curr_vertex = curr_vertex << 1;
 				}
-				std::vector<float> unitVertices = getVertices(code);
+				std::vector<float> unitVertices = getInterpolatedVertices(code, corner_values);
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
-						glm::vec4 newVertexAdjustment = glm::vec4(0.5f - abs(unitVertices[i]), 0.5f - abs(unitVertices[i+1]), 0.5f - abs(unitVertices[i+2]), 1.0f);
 						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
-						float distance = distanceToSphere(glm::vec3(tri_v.x, tri_v.y, tri_v.z));
-						while (abs(distance) > 0.001f) {
-							distance = distanceToSphere(glm::vec3(tri_v.x, tri_v.y, tri_v.z));
-							tri_v -= distance*(translate*newVertexAdjustment);
-						}
 						vertices.push_back(tri_v.x);
 						vertices.push_back(tri_v.y);
 						vertices.push_back(tri_v.z);
