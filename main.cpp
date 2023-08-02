@@ -7,6 +7,8 @@
 #include "mc_table_gen.cpp"
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -18,7 +20,7 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const float UNIT_SIZE = 1.0f / 32.0f;
+const float UNIT_SIZE = 1.0f / 16.0f;
 
 
 std::vector<float> vertices;
@@ -38,8 +40,40 @@ glm::vec4 cubePositions[8] = {
 
 // Abstract to an object so we can have other shapes
 
+
+float sdfRecursiceTetra(glm::vec3 vertex) {
+	glm::vec3 z = vertex;
+	glm::vec3 a1 = glm::vec3(1,1,1);
+	glm::vec3 a2 = glm::vec3(-1,-1,1);
+	glm::vec3 a3 = glm::vec3(1,-1,-1);
+	glm::vec3 a4 = glm::vec3(-1,1,-1);
+	glm::vec3 c = a1;
+	float scale = 2.0f;
+
+	int n = 0;
+	float dist, d;
+
+	while (n < 5) {
+		c = a1;
+		dist = glm::length(z - a1);
+		d = glm::length(z-a2); if (d < dist) { c = a2; dist=d; }
+		d = glm::length(z-a3); if (d < dist) { c = a3; dist=d; }
+		d = glm::length(z-a4); if (d < dist) { c = a4; dist=d; }
+		z = scale*z-((scale-1.0f)*c);
+		n++;
+	}
+
+	return (glm::length(z) * pow(scale, float(-n))) - 0.1;
+}
+
+float distanceToRecurringSpheres(glm::vec3 vertex) {
+
+	return glm::length(glm::vec3(glm::mod(vertex.x, 1.0f) - 0.5, vertex.y, glm::mod(vertex.z, 1.0f) - 0.5))-0.3f;    
+
+};
+
 float distanceToSphere(glm::vec3 vertex) {
-	return glm::length(vertex) - 1.0f;
+	return std::max(-(vertex.x*vertex.x + vertex.z*vertex.z - 0.02f), glm::length(vertex) - 0.5f);
 };
 
 bool isInSphere(glm::vec3 vertex) {
@@ -52,16 +86,16 @@ bool isInSphere(glm::vec3 vertex) {
 GLuint createSphereBuffer() {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
-		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
-			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
+	for(float x=-4.0f; x<=4.05f; x+=UNIT_SIZE) {
+		for(float y=-4.0f; y<=4.05f; y+=UNIT_SIZE) {
+			for(float z=-4.0f; z<=4.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
 				for (int i = 0; i < 8; i++) {
 					glm::vec4 cvertex = cubePositions[i];
 					glm::vec4 newPos = translate * scale * cvertex;
-					float distance = distanceToSphere(newPos);
+					float distance = sdfRecursiceTetra(newPos);
 					corner_values[i] = distance;
 
 					if (distance < 0.0f) {
@@ -168,7 +202,7 @@ int main() {
 
 	mVAO = createSphereBuffer();
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glEnable(GL_DEPTH_TEST);
 
