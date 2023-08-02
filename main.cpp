@@ -39,7 +39,7 @@ glm::vec4 cubePositions[8] = {
 // Abstract to an object so we can have other shapes
 
 float distanceToSphere(glm::vec3 vertex) {
-	return glm::length(vertex) - 1.0f;
+	return sin(vertex.x*3.14) + cos(vertex.y * 6) - vertex.y;
 };
 
 bool isInSphere(glm::vec3 vertex) {
@@ -52,9 +52,9 @@ bool isInSphere(glm::vec3 vertex) {
 GLuint createSphereBuffer() {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
-		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
-			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
+	for(float x=-2.0f; x<=2.05f; x+=UNIT_SIZE) {
+		for(float y=-2.0f; y<=2.05f; y+=UNIT_SIZE) {
+			for(float z=-2.0f; z<=2.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
@@ -168,7 +168,7 @@ int main() {
 
 	mVAO = createSphereBuffer();
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glEnable(GL_DEPTH_TEST);
 
