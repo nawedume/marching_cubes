@@ -195,7 +195,7 @@ int main() {
 		shader.setMat4("view", view);
 		
 		glBindVertexArray(mVAO);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size()/3);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
