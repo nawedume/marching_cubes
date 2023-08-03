@@ -7,12 +7,9 @@
 #include "mc_table_gen.cpp"
 #include <vector>
 #include <iostream>
-<<<<<<< HEAD
 #include <algorithm>
 #include <cmath>
-=======
 #include "noise.hpp"
->>>>>>> noise
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -93,11 +90,7 @@ float distanceToRecurringSpheres(glm::vec3 vertex) {
 };
 
 float distanceToSphere(glm::vec3 vertex) {
-<<<<<<< HEAD
 	return std::max(-(vertex.x*vertex.x + vertex.z*vertex.z - 0.02f), glm::length(vertex) - 0.5f);
-=======
-	return -vertex.y; //glm::length(vertex) - 2.0f;
->>>>>>> noise
 };
 
 bool isInSphere(glm::vec3 vertex) {
@@ -111,28 +104,17 @@ GLuint createSphereBuffer() {
 
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-<<<<<<< HEAD
-	for(float x=-4.0f; x<=4.05f; x+=UNIT_SIZE) {
-		for(float y=-4.0f; y<=4.05f; y+=UNIT_SIZE) {
-			for(float z=-4.0f; z<=4.05f; z+=UNIT_SIZE) {
-=======
 	for(float x=0.0f; x<=8.05f; x+=UNIT_SIZE) {
 		for(float y=-2.0f; y<=2.05f; y+=UNIT_SIZE) {
 			for(float z=0.0f; z<=8.05f; z+=UNIT_SIZE) {
->>>>>>> noise
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
 				for (int i = 0; i < 8; i++) {
 					glm::vec4 cvertex = cubePositions[i];
 					glm::vec4 newPos = translate * scale * cvertex;
-<<<<<<< HEAD
-					float distance = sdfRecursiceTetra(newPos);
-					corner_values[i] = distance;
-=======
 					float density = density_fn(newPos);
 					corner_values[i] = density;
->>>>>>> noise
 
 					if (density < 0.0f) {
 						code |= curr_vertex;
@@ -265,11 +247,7 @@ int main() {
 		shader.setMat4("view", view);
 		
 		glBindVertexArray(mVAO);
-<<<<<<< HEAD
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size()/3);
-=======
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
->>>>>>> noise
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
