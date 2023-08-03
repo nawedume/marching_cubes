@@ -7,6 +7,7 @@
 #include "mc_table_gen.cpp"
 #include <vector>
 #include <iostream>
+#include "noise.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -18,7 +19,7 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const float UNIT_SIZE = 1.0f / 32.0f;
+const float UNIT_SIZE = 1.0f / 16.0f;
 
 
 std::vector<float> vertices;
@@ -37,9 +38,25 @@ glm::vec4 cubePositions[8] = {
 };
 
 // Abstract to an object so we can have other shapes
+DataMat noise1 = gen_3d_noise(16);
+DataMat noise2 = gen_3d_noise(16);
+DataMat noise3 = gen_3d_noise(16);
+DataMat noise4 = gen_3d_noise(16);
+
+float density_fn(glm::vec3 vertex)
+{
+	float density = -vertex.y;
+	density += noise1.get(vertex * 5.0f) * 0.05f;
+	density += noise2.get(vertex * 2.46f) * 0.10f;
+	density += noise3.get(vertex * 1.21f) * 0.20f;
+
+	density += noise4.get(vertex * 0.5f) * 2.0f;
+	
+	return density ;
+}
 
 float distanceToSphere(glm::vec3 vertex) {
-	return glm::length(vertex) - 2.0f;
+	return -vertex.y; //glm::length(vertex) - 2.0f;
 };
 
 bool isInSphere(glm::vec3 vertex) {
@@ -50,21 +67,22 @@ bool isInSphere(glm::vec3 vertex) {
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
 GLuint createSphereBuffer() {
+
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-	for(float x=-2.0f; x<=2.05f; x+=UNIT_SIZE) {
+	for(float x=0.0f; x<=8.05f; x+=UNIT_SIZE) {
 		for(float y=-2.0f; y<=2.05f; y+=UNIT_SIZE) {
-			for(float z=-2.0f; z<=2.05f; z+=UNIT_SIZE) {
+			for(float z=0.0f; z<=8.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
 				for (int i = 0; i < 8; i++) {
 					glm::vec4 cvertex = cubePositions[i];
 					glm::vec4 newPos = translate * scale * cvertex;
-					float distance = distanceToSphere(newPos);
-					corner_values[i] = distance;
+					float density = density_fn(newPos);
+					corner_values[i] = density;
 
-					if (distance < 0.0f) {
+					if (density < 0.0f) {
 						code |= curr_vertex;
 					}
 					curr_vertex = curr_vertex << 1;
@@ -134,6 +152,8 @@ GLuint createBuffers()
 }
 
 int main() {
+	// replace with time if needed
+	srand(123);
 	
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -193,7 +213,7 @@ int main() {
 		shader.setMat4("view", view);
 		
 		glBindVertexArray(mVAO);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size() / 3);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -213,7 +233,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-uint32_t lastChangeTime = 0;
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -227,13 +246,10 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && lastChangeTime == 0)
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) 
 	{
-		config_num += 1;
-		lastChangeTime = 15;
+		camera.ProcessKeyboard(UP, deltaTime);
 	}
-
-	if (lastChangeTime) lastChangeTime -= 1;
 }
 
 // glfw: whenever the mouse moves, this callback is called
