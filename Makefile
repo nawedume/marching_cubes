@@ -1,4 +1,4 @@
-CFLAGS = -std=c++17 -O2 glad.cpp
+CFLAGS = -std=c++17 -O2 glad.cpp noise.cpp
 LDFLAGS = -lglfw -ldl -lpthread
 
 OpenGLTest: main.cpp
