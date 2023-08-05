@@ -51,9 +51,7 @@ float density_fn(glm::vec3 vertex)
 	density += noise1.get(vertex * 5.0f) * 0.05f;
 	density += noise2.get(vertex * 2.46f) * 0.10f;
 	density += noise3.get(vertex * 1.21f) * 0.20f;
-
 	density += noise4.get(vertex * 0.5f) * 2.0f;
-	
 	return density ;
 }
 
@@ -97,11 +95,20 @@ bool isInSphere(glm::vec3 vertex) {
 	return distanceToSphere(vertex) < 0.0f;
 };
 
+const float epsilon = 1.0f / 16.0f;
+glm::vec3 get_normal(glm::vec3 vertex)
+{
+	glm::vec3 grad;
+	grad.x = density_fn(vertex + glm::vec3(epsilon, 0.0, 0.0)) - density_fn(vertex - glm::vec3(epsilon, 0.0, 0.0));
+	grad.y = density_fn(vertex + glm::vec3(0.0, epsilon, 0.0)) - density_fn(vertex - glm::vec3(0.0, epsilon, 0.0));
+	grad.z = density_fn(vertex + glm::vec3(0.0, 0.0, epsilon)) - density_fn(vertex - glm::vec3(0.0, 0.0, epsilon));
 
+	return glm::normalize(grad);
+}
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
 GLuint createSphereBuffer() {
-
+	std::vector<float> normals;
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
 	for(float x=0.0f; x<=8.05f; x+=UNIT_SIZE) {
@@ -128,6 +135,11 @@ GLuint createSphereBuffer() {
 						vertices.push_back(tri_v.x);
 						vertices.push_back(tri_v.y);
 						vertices.push_back(tri_v.z);
+
+						glm::vec3 normal = get_normal(tri_v);
+						normals.push_back(normal.x);
+						normals.push_back(normal.y);
+						normals.push_back(normal.z);
 					}
 				}
 			}
@@ -136,9 +148,11 @@ GLuint createSphereBuffer() {
 
 	unsigned int VBO; 
     unsigned int VAO;
+	GLuint normalVbo;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &normalVbo);
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
@@ -146,6 +160,13 @@ GLuint createSphereBuffer() {
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, normalVbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size(), normals.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*) 0);
+	glEnableVertexAttribArray(1);
+
 	return VAO;
 };
 
@@ -220,7 +241,7 @@ int main() {
 
 	mVAO = createSphereBuffer();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glEnable(GL_DEPTH_TEST);
 

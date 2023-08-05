@@ -1,15 +1,17 @@
 #version 330 core
 
 in vec3 vWorldPos;
+in vec3 vNormal;
 
 out vec4 FragColor;
 
 void main() {
+	vec3 normal = -normalize(vNormal);	
+	vec3 lightDir = normalize(vec3(0.0, 1.0, 1.0));
+	float diffuseStrength = dot(normal, lightDir);
+	float ambientStrength = 0.1;
 
-	float ds = 0.0;
-	float ambientStrength = 1.0;
-	vec3 color = vec3(0.7, 0.0, 0.0) * (ds + ambientStrength);
-
+	vec3 color;
 	if (vWorldPos.y > 1.0)
 	{
 		color = vec3(0.98, 0.98, 0.98);
@@ -19,6 +21,7 @@ void main() {
 	} else {
 		color = vec3(0.1, 0.8, 0.2);
 	}
+	color = color * (diffuseStrength + ambientStrength);
 
-	FragColor = vec4(color, 1.0);
+	FragColor = clamp(vec4(color, 1.0), 0.0, 1.0);
 }
