@@ -242,7 +242,7 @@ GLFWwindow* setupWindow(int width, int height)
 
     glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GL_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
     GLFWwindow* window = glfwCreateWindow(width, height, "Model loading tutorial", NULL, NULL);
     if (window == NULL)
