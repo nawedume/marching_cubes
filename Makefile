@@ -1,13 +1,31 @@
-CFLAGS = -std=c++17 -O2 glad.cpp noise.cpp
-LDFLAGS = -lglfw -ldl -lpthread
+EXE = build.out
+LIB_DIR = lib
+BUILD_DIR = build/
+$(shell mkdir -p $(BUILD_DIR))
 
-OpenGLTest: main.cpp
-	g++ $(CFLAGS) -o openGLMain main.cpp $(LDFLAGS)
+SRC_DIR = src
+SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+LIBS = $(LIB_DIR)/glad.cpp
 
-.PHONY: test clean
+OBJS = $(addprefix $(BUILD_DIR), $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 
-test: OpenGLTest
-	./openGLMain
+CXXFLAGS = -std=c++11 -lglfw -I./lib/glm -I./lib
+
+ECHO_MESSAGE = "Linux"
+
+# rules
+
+$(BUILD_DIR)%.o:$(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+all: $(EXE)
+	@echo Build complete for $(ECHO_MESSAGE)
+
+$(EXE): $(OBJS)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
 clean:
-	rm -f openGLMain
+	rm -rf $(EXE) $(BUILD_DIR)
+
+test:
+	make && ./build.out
