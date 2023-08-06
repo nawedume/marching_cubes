@@ -9,7 +9,7 @@ LIBS = $(LIB_DIR)/glad.cpp
 
 OBJS = $(addprefix $(BUILD_DIR), $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 
-CXXFLAGS = -std=c++11 -lglfw -I./lib/glm -I./lib
+CXXFLAGS = -std=c++17 -lglfw -I./lib/glm -I./lib
 
 ECHO_MESSAGE = "Linux"
 

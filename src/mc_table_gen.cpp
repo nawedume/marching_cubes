@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <glm/glm.hpp>
 
 const uint8_t v0 = 1;
 const uint8_t v1 = v0 << 1;
