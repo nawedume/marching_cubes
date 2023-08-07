@@ -13,7 +13,6 @@ void main()
 
     float diffuseStrength = max(0.0, dot(normal, lightDir));
     const float ambientStrength = 0.5;
-    vec3 color = vec3(1.0, 0.0, 1.0) * (ambientStrength + diffuseStrength);
+    vec3 color = vec3(0.6, 0.6, 0.6) * (ambientStrength + diffuseStrength);
     outColor = clamp(vec4(color, 1.0), 0.0, 1.0);
-
 }

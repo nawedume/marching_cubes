@@ -549,7 +549,8 @@ ivec2 EDGE_TO_VERTICES_LIST[12] = ivec2[12](
 
 uniform sampler3D screenTexture;
 uniform vec3 uChunkPosition;
-uniform float uChunkWidth;
+uniform float uNumVoxelsPerDim;
+uniform float uVoxelSize;
 
 layout (points) in;
 layout (triangle_strip, max_vertices = 12) out;
@@ -565,12 +566,13 @@ float mSample(vec3 coord)
 /**
 * IMPORTANT! Assumes vector is one of the corner vectors
 */
-vec3 get_normal_for_vec(vec3 corner_vector, vec3 global_pos)
+vec3 get_normal_for_vec(vec3 corner_vector, vec3 local_pos)
 {
-    const vec3 offset_x = vec3(1.0, 0.0, 0.0) / uChunkWidth;
-    const vec3 offset_y = vec3(0.0, 1.0, 0.0) / uChunkWidth;
-    const vec3 offset_z = vec3(0.0, 0.0, 1.0) / uChunkWidth;
-    vec3 base_coord = (corner_vector + global_pos) / uChunkWidth;
+    const float chunkWidth = uVoxelSize * uNumVoxelsPerDim;
+    const vec3 offset_x = vec3(1.0, 0.0, 0.0) / uNumVoxelsPerDim;
+    const vec3 offset_y = vec3(0.0, 1.0, 0.0) / uNumVoxelsPerDim;
+    const vec3 offset_z = vec3(0.0, 0.0, 1.0) / uNumVoxelsPerDim;
+    vec3 base_coord = (corner_vector + local_pos) / chunkWidth;
 
     vec3 normal;
     normal.x = mSample(base_coord + offset_x) - mSample(base_coord - offset_x);
@@ -580,7 +582,7 @@ vec3 get_normal_for_vec(vec3 corner_vector, vec3 global_pos)
     return -normalize(normal);
 }
 
-void emitVertex(int edge, float corner_vals[8], float samplerOffset, vec3 global_pos)
+void emitVertex(int edge, float corner_vals[8], float samplerOffset, vec3 local_pos)
 {
     ivec2 edge_vertices = EDGE_TO_VERTICES_LIST[edge];
     vec3 v1 = CORNER_VECTORS[edge_vertices.x];
@@ -592,7 +594,7 @@ void emitVertex(int edge, float corner_vals[8], float samplerOffset, vec3 global
     vec3 interpolated_vertex = ((1 - alpha) * v1)  + (alpha * v2);
 
     // Move the interpolated poitn into worls space
-    vec3 vertex_chunk_space = interpolated_vertex + gl_in[0].gl_Position.xyz;
+    vec3 vertex_chunk_space = (interpolated_vertex * uVoxelSize) + gl_in[0].gl_Position.xyz;
     outVec.xyz = vertex_chunk_space + uChunkPosition;
     
     //vec3 samplerCoord = vertex_chunk_space / uChunkWidth;
@@ -602,19 +604,18 @@ void emitVertex(int edge, float corner_vals[8], float samplerOffset, vec3 global
     //// have to negate it because the gradient points to the direction of highest density.
     //outNormal = -normalize(outNormal);
 
-    vec3 v1_normal = get_normal_for_vec(v1, global_pos);
-    vec3 v2_normal = get_normal_for_vec(v2, global_pos);
+    vec3 v1_normal = get_normal_for_vec(v1 * uVoxelSize, local_pos);
+    vec3 v2_normal = get_normal_for_vec(v2 * uVoxelSize, local_pos);
     vec3 normal = ((1 - alpha) * v1_normal) + (alpha * v2_normal);
     outNormal = normalize(normal);
-
     EmitVertex();
 }
 
 void main()
 {
-    vec3 global_pos = gl_in[0].gl_Position.xyz;
-    vec3 samplerCoord = gl_in[0].gl_Position.xyz / uChunkWidth;
-    float samplerOffset = 1.0 / uChunkWidth;
+    vec3 local_pos = gl_in[0].gl_Position.xyz;
+    vec3 samplerCoord = gl_in[0].gl_Position.xyz / (uNumVoxelsPerDim * uVoxelSize);
+    float samplerOffset = 1.0 / uNumVoxelsPerDim;
     float corner_vals[8];
     corner_vals[0] = texture(screenTexture, samplerCoord).x;
     corner_vals[1] = texture(screenTexture, samplerCoord + vec3(samplerOffset, 0.0, 0.0)).x;
@@ -636,9 +637,9 @@ void main()
     int edge_count = CONFIG_TO_VERTEX_COUNT[config];
     for (int i = 0; i < edge_count; i += 3)
     {
-        emitVertex(edges[i], corner_vals, samplerOffset, global_pos);
-        emitVertex(edges[i+1], corner_vals, samplerOffset, global_pos);
-        emitVertex(edges[i+2], corner_vals, samplerOffset, global_pos);
+        emitVertex(edges[i], corner_vals, samplerOffset, local_pos);
+        emitVertex(edges[i+1], corner_vals, samplerOffset, local_pos);
+        emitVertex(edges[i+2], corner_vals, samplerOffset, local_pos);
         EndPrimitive();
     }   
 }
