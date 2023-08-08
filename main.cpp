@@ -95,10 +95,9 @@ float distanceToSphere(glm::vec3 vertex) {
 };
 
 glm::vec3 getNormal(glm::vec3 p, float (*f)(glm::vec3)) {
-	glm::vec3 norm;
 	const float eps = 1.0f;
-    const glm::vec2 k = glm::vec2(1,-1);
-	return glm::normalize(k.xyy()*f(p + k.xyy()*UNIT_SIZE*eps)+
+    const glm::vec2 k = glm::vec2(1.0f,-1.0f);
+	return (k.xyy()*f(p + k.xyy()*UNIT_SIZE*eps)+
 						k.yyx()*f(p + k.yyx()*UNIT_SIZE*eps) +
 						k.yxy()*f(p + k.yxy()*UNIT_SIZE*eps) +
 						k.xxx()*f(p + k.xxx()*UNIT_SIZE*eps));
@@ -110,9 +109,9 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
+	for(float x=-5.0f; x<=5.05f; x+=UNIT_SIZE) {
 		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
-			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
+			for(float z=-5.0f; z<=5.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
@@ -130,8 +129,9 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 				std::vector<float> unitVertices = getInterpolatedVertices(code, corner_values);
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
+						glm::vec3 v(unitVertices[i], unitVertices[i+1], unitVertices[i+2]);
 						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
-						glm::vec3 norms = getNormal(tri_v.xyz(), f);
+						glm::vec3 norms = getNormal(tri_v, f);
 						vertices.push_back(tri_v.x);
 						vertices.push_back(tri_v.y);
 						vertices.push_back(tri_v.z);
@@ -258,9 +258,11 @@ int main() {
 		
 		glm::mat4 view = camera.GetViewMatrix();
 		shader.setMat4("view", view);
+
+		shader.setVec3("viewPos", camera.Position);
 		
 		glBindVertexArray(mVAO);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size()/3);
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size()/6);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
