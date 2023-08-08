@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 
 #include "shader_s.h"
@@ -10,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include "noise.hpp"
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -57,7 +59,6 @@ float density_fn(glm::vec3 vertex)
 	return density ;
 }
 
-
 float sdfRecursiceTetra(glm::vec3 vertex) {
 	glm::vec3 z = vertex;
 	glm::vec3 a1 = glm::vec3(1,1,1);
@@ -65,7 +66,7 @@ float sdfRecursiceTetra(glm::vec3 vertex) {
 	glm::vec3 a3 = glm::vec3(1,-1,-1);
 	glm::vec3 a4 = glm::vec3(-1,1,-1);
 	glm::vec3 c = a1;
-	float scale = 2.0f;
+	float scale = 4.0f;
 
 	int n = 0;
 	float dist, d;
@@ -85,18 +86,23 @@ float sdfRecursiceTetra(glm::vec3 vertex) {
 
 float distanceToRecurringSpheres(glm::vec3 vertex) {
 
-	return glm::length(glm::vec3(glm::mod(vertex.x, 1.0f) - 0.5, vertex.y, glm::mod(vertex.z, 1.0f) - 0.5))-0.3f;    
+	return glm::length(glm::vec3(glm::mod(vertex.x, 1.0f) - 0.5, vertex.y, glm::mod(vertex.z, 1.0f) - 0.5)) -0.3f;    
 
 };
 
 float distanceToSphere(glm::vec3 vertex) {
-	return std::max(-(vertex.x*vertex.x + vertex.z*vertex.z - 0.02f), glm::length(vertex) - 0.5f);
+	return glm::length(vertex) - 0.5f;
 };
 
-bool isInSphere(glm::vec3 vertex) {
-	return distanceToSphere(vertex) < 0.0f;
-};
-
+glm::vec3 getNormal(glm::vec3 p) {
+	glm::vec3 norm;
+	const float eps = 1.0f;
+    const glm::vec2 k = glm::vec2(1,-1);
+	return glm::normalize(k.xyy()*density_fn(p + k.xyy()*UNIT_SIZE*eps)+
+						k.yyx()*density_fn(p + k.yyx()*UNIT_SIZE*eps) +
+						k.yxy()*density_fn(p + k.yxy()*UNIT_SIZE*eps) +
+						k.xxx()*density_fn(p + k.xxx()*UNIT_SIZE*eps));
+}
 
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
@@ -104,9 +110,9 @@ GLuint createSphereBuffer() {
 
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-	for(float x=0.0f; x<=8.05f; x+=UNIT_SIZE) {
-		for(float y=-2.0f; y<=2.05f; y+=UNIT_SIZE) {
-			for(float z=0.0f; z<=8.05f; z+=UNIT_SIZE) {
+	for(float x=-1.0f; x<=1.05f; x+=UNIT_SIZE) {
+		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
+			for(float z=-1.0f; z<=1.05f; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
@@ -125,9 +131,13 @@ GLuint createSphereBuffer() {
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
 						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
+						glm::vec3 norms = getNormal(tri_v.xyz());
 						vertices.push_back(tri_v.x);
 						vertices.push_back(tri_v.y);
 						vertices.push_back(tri_v.z);
+						vertices.push_back(norms.x);
+						vertices.push_back(norms.y);
+						vertices.push_back(norms.z);
 					}
 				}
 			}
@@ -144,8 +154,11 @@ GLuint createSphereBuffer() {
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(sizeof(float)*3));
+    glEnableVertexAttribArray(1);
 	return VAO;
 };
 
@@ -220,7 +233,7 @@ int main() {
 
 	mVAO = createSphereBuffer();
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glEnable(GL_DEPTH_TEST);
 
