@@ -94,19 +94,19 @@ float distanceToSphere(glm::vec3 vertex) {
 	return glm::length(vertex) - 0.5f;
 };
 
-glm::vec3 getNormal(glm::vec3 p) {
+glm::vec3 getNormal(glm::vec3 p, float (*f)(glm::vec3)) {
 	glm::vec3 norm;
 	const float eps = 1.0f;
     const glm::vec2 k = glm::vec2(1,-1);
-	return glm::normalize(k.xyy()*density_fn(p + k.xyy()*UNIT_SIZE*eps)+
-						k.yyx()*density_fn(p + k.yyx()*UNIT_SIZE*eps) +
-						k.yxy()*density_fn(p + k.yxy()*UNIT_SIZE*eps) +
-						k.xxx()*density_fn(p + k.xxx()*UNIT_SIZE*eps));
+	return glm::normalize(k.xyy()*f(p + k.xyy()*UNIT_SIZE*eps)+
+						k.yyx()*f(p + k.yyx()*UNIT_SIZE*eps) +
+						k.yxy()*f(p + k.yxy()*UNIT_SIZE*eps) +
+						k.xxx()*f(p + k.xxx()*UNIT_SIZE*eps));
 }
 
 
 //Unoptimized and glitchy, can create spheres-like object with the current configs
-GLuint createSphereBuffer() {
+GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
@@ -119,7 +119,7 @@ GLuint createSphereBuffer() {
 				for (int i = 0; i < 8; i++) {
 					glm::vec4 cvertex = cubePositions[i];
 					glm::vec4 newPos = translate * scale * cvertex;
-					float density = density_fn(newPos);
+					float density = f(newPos);
 					corner_values[i] = density;
 
 					if (density < 0.0f) {
@@ -131,7 +131,7 @@ GLuint createSphereBuffer() {
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
 						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
-						glm::vec3 norms = getNormal(tri_v.xyz());
+						glm::vec3 norms = getNormal(tri_v.xyz(), f);
 						vertices.push_back(tri_v.x);
 						vertices.push_back(tri_v.y);
 						vertices.push_back(tri_v.z);
@@ -231,7 +231,7 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer();
+	mVAO = createSphereBuffer(distanceToSphere);
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
