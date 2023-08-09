@@ -231,7 +231,7 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(distanceToRecurringSpheres);
+	mVAO = createSphereBuffer(distanceToSphere);
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
