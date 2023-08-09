@@ -2,14 +2,15 @@
 
 in vec3 vWorldPos;
 in vec3 Norms;
+in vec2 textcoord;
 
 uniform vec3 viewPos;
+uniform sampler2D ourTexture;
 
 out vec4 FragColor;
 
-
 void main() {
-	vec3 color = vec3(0.5,0.25,0.0);
+	vec3 color = vec3(1.0,1.0,1.0);
 	vec3 lightDir = normalize(vec3(0.0,-1.0,-1.0));
 	vec3 lightColor = vec3(1.0,1.0,1.0);
 
@@ -17,7 +18,7 @@ void main() {
 	float diff = max(dot(norm,lightDir), 0.0);
 	vec3 ds = diff * lightColor;
 
-	float ambientStrength = 0.3;
+	float ambientStrength = 0.1;
 	vec3 ambience = ambientStrength*lightColor;
 
 	// specular
@@ -28,5 +29,5 @@ void main() {
     vec3 specular = specularStrength * spec * lightColor;  
 
 	color = color * (ds + ambience + specular);
-	FragColor = clamp(vec4(color, 1.0),0.0, 1.0);
+	FragColor = texture(ourTexture, textcoord) * clamp(vec4(color, 1.0),0.0, 1.0);
 }

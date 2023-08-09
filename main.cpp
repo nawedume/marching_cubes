@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include "shader_s.h"
 #include "camera.h"
@@ -22,6 +24,13 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+const float X_MIN = 0.0f;
+const float X_MAX = 1.0f;
+const float Y_MIN = -1.0f;
+const float Y_MAX = 1.0f;
+const float Z_MIN = 0.0f;
+const float Z_MAX = 1.0f;
 
 const float UNIT_SIZE = 1.0f / 16.0f;
 
@@ -57,6 +66,10 @@ float density_fn(glm::vec3 vertex)
 	density += noise4.get(vertex * 0.5f) * 2.0f;
 	
 	return density ;
+}
+
+float plane_fn(glm::vec3 vertex) {
+	return -1.0f - vertex.y;
 }
 
 float sdfRecursiceTetra(glm::vec3 vertex) {
@@ -109,9 +122,9 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(UNIT_SIZE));
 	float corner_values[8];
-	for(float x=-5.0f; x<=5.05f; x+=UNIT_SIZE) {
-		for(float y=-1.0f; y<=1.05f; y+=UNIT_SIZE) {
-			for(float z=-5.0f; z<=5.05f; z+=UNIT_SIZE) {
+	for(float x=X_MIN; x<=X_MAX; x+=UNIT_SIZE) {
+		for(float y=Y_MIN; y<=Y_MAX; y+=UNIT_SIZE) {
+			for(float z=Z_MIN; z<=Z_MAX; z+=UNIT_SIZE) {
 				uint8_t code = 0;
 				uint8_t curr_vertex = 1;
 				glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(x,y,z));
@@ -138,6 +151,9 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 						vertices.push_back(norms.x);
 						vertices.push_back(norms.y);
 						vertices.push_back(norms.z);
+						vertices.push_back(glm::mod(tri_v.x-X_MIN, 1.0f));
+						vertices.push_back(glm::mod(tri_v.z-Z_MIN, 1.0f));
+						//std::cout << tri_v.x << ' ' << tri_v.z << std::endl;
 					}
 				}
 			}
@@ -154,11 +170,15 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(sizeof(float)*3));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(sizeof(float)*3));
     glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(sizeof(float)*6));
+    glEnableVertexAttribArray(2);
+
 	return VAO;
 };
 
@@ -175,28 +195,6 @@ float lastFrame = 0.0f;
 uint8_t config_num = 1;
 std::vector<float> cubeVector(12);
 GLuint mVAO;
-
-GLuint createBuffers()
-{
-	//Creating array for marching cube triangulation to render
-	cubeVector = getVertices(config_num);
-	float vertexBufferData[cubeVector.size()];
-	std::copy(cubeVector.begin(), cubeVector.end(), vertexBufferData);
-	unsigned int VBO; 
-    unsigned int VAO;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER,VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-	return VAO;
-}
 
 int main() {
 	// replace with time if needed
@@ -231,7 +229,30 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(distanceToSphere);
+	mVAO = createSphereBuffer(plane_fn);
+
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("awesomeface.png", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+    	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    	glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+    	std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -239,6 +260,7 @@ int main() {
 
 	Shader shader("vertex.vs", "fragment.fs");
 	shader.use();
+	shader.setInt("ourTexture", 0);
 
 	while(!glfwWindowShouldClose(window)) {
 
@@ -251,8 +273,6 @@ int main() {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		shader.use();
-		
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH/(float)SCR_HEIGHT, 0.1f, 100.0f);
 		shader.setMat4("projection", projection);
 		
@@ -260,9 +280,14 @@ int main() {
 		shader.setMat4("view", view);
 
 		shader.setVec3("viewPos", camera.Position);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		
+		
+        shader.use();
 		glBindVertexArray(mVAO);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size()/6);
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size()/8);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
