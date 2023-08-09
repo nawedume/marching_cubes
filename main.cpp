@@ -81,17 +81,17 @@ float sdfRecursiceTetra(glm::vec3 vertex) {
 		n++;
 	}
 
-	return (glm::length(z) * pow(scale, float(-n))) - 0.1;
+	return 0.1f - (glm::length(z) * pow(scale, float(-n)));
 }
 
 float distanceToRecurringSpheres(glm::vec3 vertex) {
 
-	return glm::length(glm::vec3(glm::mod(vertex.x, 1.0f) - 0.5, vertex.y, glm::mod(vertex.z, 1.0f) - 0.5)) -0.3f;    
+	return 0.3f - glm::length(glm::vec3(glm::mod(vertex.x, 1.0f) - 0.5, vertex.y, glm::mod(vertex.z, 1.0f) - 0.5));    
 
 };
 
 float distanceToSphere(glm::vec3 vertex) {
-	return glm::length(vertex) - 0.5f;
+	return 0.5f - glm::length(vertex);
 };
 
 glm::vec3 getNormal(glm::vec3 p, float (*f)(glm::vec3)) {
@@ -231,7 +231,7 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(distanceToSphere);
+	mVAO = createSphereBuffer(distanceToRecurringSpheres);
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
