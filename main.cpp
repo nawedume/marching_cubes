@@ -25,12 +25,12 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const float X_MIN = 0.0f;
-const float X_MAX = 1.0f;
+const float X_MIN = -5.0f;
+const float X_MAX = 5.0f;
 const float Y_MIN = -1.0f;
 const float Y_MAX = 1.0f;
-const float Z_MIN = 0.0f;
-const float Z_MAX = 1.0f;
+const float Z_MIN = -5.0f;
+const float Z_MAX = 5.0f;
 
 const float UNIT_SIZE = 1.0f / 16.0f;
 
@@ -153,7 +153,6 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 						vertices.push_back(norms.z);
 						vertices.push_back(tri_v.x-X_MIN);
 						vertices.push_back(tri_v.z-Z_MIN);
-						std::cout << tri_v.x-X_MIN << ' ' << tri_v.z-Z_MIN << ' ' << tri_v.y << std::endl;
 					}
 				}
 			}
@@ -229,22 +228,22 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(plane_fn);
+	mVAO = createSphereBuffer(density_fn);
 
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load("awesomeface.png", &width, &height, &nrChannels, 0);
+	unsigned char *data = stbi_load("sand_col.jpg", &width, &height, &nrChannels, 0);
 	if (data)
 	{
-    	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     	glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
