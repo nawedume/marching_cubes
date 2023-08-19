@@ -42,6 +42,11 @@ public:
         return e6;
     }
 
+    float* get_backing_data()
+    {
+        return data;
+    }
+
 private:
     float* data;
     int dim;

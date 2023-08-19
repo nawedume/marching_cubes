@@ -12,6 +12,7 @@ uniform float voxelSize;
 
 void main()
 {
+    // Pure Quad positions
     gl_Position = vec4(inPos, 0.0, 1.0);
     
     // Converts the Quad coordinates to world position coordinates.

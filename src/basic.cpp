@@ -7,6 +7,9 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "camera.hpp"
+#include <chrono>
+#include <random>
+#include "noise.hpp"
 
 float previousTime = 0.0;
 float deltaTime = 1.0f / 60.0f;
@@ -32,13 +35,43 @@ struct GlobalChunkConfig
 
 GlobalChunkConfig GLOBAL_CHUNK_CONFIG {
     32,
-    1.0f / 16.0f
+    8.0f / 32.0f
 };
 
 struct Texture3DBuffer {
     GLuint fbo;
     GLuint texture;
 };
+
+void print_vec(glm::vec3 p)
+{
+    std::cout << p.x << ", " << p.y << ", " << p.z << std::endl;
+}
+
+DataMat noise1 = gen_3d_noise(16);
+DataMat noise2 = gen_3d_noise(16);
+DataMat noise3 = gen_3d_noise(16);
+DataMat noise4 = gen_3d_noise(16);
+DataMat noise5 = gen_3d_noise(16);
+
+void myfunc(int (* func)(int a, int b))
+{
+    std::cout << func(1, 2) << std::endl;
+}
+
+GLuint createNoiseTexture(DataMat noise)
+{
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_3D, texture);
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, 16, 16, 16, 0, GL_RED, GL_FLOAT, noise.get_backing_data());
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glBindTexture(GL_TEXTURE_3D, 0);
+    return texture;
+}
 
 Texture3DBuffer createFramebuffer()
 {
@@ -50,8 +83,10 @@ Texture3DBuffer createFramebuffer()
     glGenTextures(1, &densityTextureBuffer);
     glBindTexture(GL_TEXTURE_3D, densityTextureBuffer);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, GLOBAL_CHUNK_CONFIG.numVoxelsPerDim + 1, GLOBAL_CHUNK_CONFIG.numVoxelsPerDim + 1, GLOBAL_CHUNK_CONFIG.numVoxelsPerDim + 1, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glBindTexture(GL_TEXTURE_3D, 0);
 
     GLuint rbo;
@@ -99,15 +134,68 @@ struct ChunkMeshOutput
 {
     GLuint vao;
     GLuint feedbackObj;
+    GLuint bufferBase;
 };
 
-ChunkMeshOutput generateChunkMesh(glm::vec3 chunkPosition, Texture3DBuffer renderImageFramebuffer)
+struct Chunk
+{
+    ChunkMeshOutput meshOutput;
+    glm::vec3 position;
+};
+
+std::vector<glm::vec3> chunksToCreate;
+std::vector<Chunk> createdChunks;
+
+void initChunksToCreate()
+{
+    int BOUND_X_START = 0;
+    int BOUND_X_END = 10;
+    int BOUND_Y_START = -3;
+    int BOUND_Y_END = 3;
+    int BOUND_Z_START = 0;
+    int BOUND_Z_END = 10;
+    float worldChunkWidth = GLOBAL_CHUNK_CONFIG.numVoxelsPerDim * GLOBAL_CHUNK_CONFIG.voxelSize;
+    for (int i = BOUND_X_START; i < BOUND_X_END; i++)
+    {
+        float x = ((float) i) * worldChunkWidth;
+        for (int j = BOUND_Y_START; j < BOUND_Y_END; j++)
+        {
+            float y = ((float) j) * worldChunkWidth;
+            for (int k = BOUND_Z_START; k < BOUND_Z_END; k++)
+            {
+                float z = ((float) k) * worldChunkWidth;
+                chunksToCreate.push_back(glm::vec3(x, y, z));
+            }
+        }
+    }
+    //chunksToCreate.push_back(glm::vec3(0.0));
+    //chunksToCreate.push_back(glm::vec3(-1.0, 0.0, 0.0));
+    //chunksToCreate.push_back(glm::vec3(-1.0, 1.0, 0.0));
+
+    std::cout << chunksToCreate.size() << std::endl;
+    //for (int i = 0; i < chunksToCreate.size(); i++)
+
+    //{
+        //std::cout << chunksToCreate[i].x << ", " << chunksToCreate[i].y << ", " << chunksToCreate[i].z << std::endl;
+    //}
+
+}
+
+struct NoiseTextures
+{
+    GLuint noise1;
+    GLuint noise2;
+    GLuint noise3;
+    GLuint noise4;
+};
+
+ChunkMeshOutput generateChunkMesh(glm::vec3 chunkPosition, Texture3DBuffer renderImageFramebuffer, NoiseTextures noiseTextures)
 {
     const char* varyings[2] { "outVec", "outNormal" };
     TransformOutputParams params {
-        .varyings = varyings,
-        .varyingsCount = 2,
-        .bufferMode = GL_INTERLEAVED_ATTRIBS 
+    .varyings = varyings,
+    .varyingsCount = 2,
+    .bufferMode = GL_INTERLEAVED_ATTRIBS 
     };
     TransformShader mcBufferShader("./shaders/mc.vs", "./shaders/mc.gs", params);
     // generate a cube buffer;
@@ -128,7 +216,15 @@ ChunkMeshOutput generateChunkMesh(glm::vec3 chunkPosition, Texture3DBuffer rende
         }
     }
 
+    GLuint transformFeedbackObj;
+    glGenTransformFeedbacks(1, &transformFeedbackObj);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, transformFeedbackObj);
+
     mcBufferShader.use();
+    mcBufferShader.setVec3("uChunkPosition", glm::value_ptr(chunkPosition));
+    mcBufferShader.setFloat("uNumVoxelsPerDim", static_cast<float>(GLOBAL_CHUNK_CONFIG.numVoxelsPerDim));
+    mcBufferShader.setFloat("uVoxelSize", GLOBAL_CHUNK_CONFIG.voxelSize);
+
     GLuint cubeVao;
     glGenVertexArrays(1, &cubeVao);
     glBindVertexArray(cubeVao);
@@ -142,44 +238,76 @@ ChunkMeshOutput generateChunkMesh(glm::vec3 chunkPosition, Texture3DBuffer rende
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
 
     // to capture the feedback buffer
-    GLuint feedbackObj;
-    glGenTransformFeedbacks(1, &feedbackObj);
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, feedbackObj);
-
-    GLuint svao;
-    glGenVertexArrays(1, &svao);
-    glBindVertexArray(svao);
-
     GLuint mcOutputBuffer;
     glGenBuffers(1, &mcOutputBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, mcOutputBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * cubeVertices.size() * 9 , nullptr, GL_STATIC_DRAW);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, mcOutputBuffer); 
 
     glViewport(0, 0, WIDTH, HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    mcBufferShader.use();
-    mcBufferShader.setVec3("uChunkPosition", glm::value_ptr(chunkPosition));
-    mcBufferShader.setFloat("uNumVoxelsPerDim", static_cast<float>(GLOBAL_CHUNK_CONFIG.numVoxelsPerDim));
-    mcBufferShader.setFloat("uVoxelSize", GLOBAL_CHUNK_CONFIG.voxelSize);
     glDisable(GL_DEPTH_TEST);
+    glEnable(GL_RASTERIZER_DISCARD);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_3D, renderImageFramebuffer.texture);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_3D, renderImageFramebuffer.texture);
-    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, mcOutputBuffer); 
-    glBindVertexArray(cubeVao);
+    glBindTexture(GL_TEXTURE_3D, noiseTextures.noise1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_3D, noiseTextures.noise2);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_3D, noiseTextures.noise3);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_3D, noiseTextures.noise4);
+
     glBeginTransformFeedback(GL_TRIANGLES);
     glDrawArrays(GL_POINTS, 0, cubeVertices.size());
     glEndTransformFeedback();
+
+    
+    //std::cout << "===========================" << std::endl;
+    //print_vec(chunkPosition);
+    //float subdata[32*32*32][3];
+    //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+    //for (int i = 0; i < 30; i += 2)
+    //{
+        //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+    //}
+
+    glBindVertexArray(0);
+    glDisable(GL_RASTERIZER_DISCARD);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+    glFlush();
     glUseProgram(0);
 
-    return { svao, feedbackObj } ;
+    return { cubeVao, transformFeedbackObj, mcOutputBuffer } ;
+}
+
+void createChunk(GLuint quadVao, Texture3DBuffer textureBuffer, Shader textureProgram, NoiseTextures noiseTextures)
+{
+    if (chunksToCreate.empty())
+    {
+        return;
+    }
+
+    glm::vec3 chunkToCreate = chunksToCreate.back();
+    chunksToCreate.pop_back();
+    ChunkMeshOutput meshOutput = generateChunkMesh(chunkToCreate, textureBuffer, noiseTextures);
+    Chunk chunk { .meshOutput = meshOutput, .position = chunkToCreate };
+    createdChunks.push_back(chunk);
+}
+
+void debugCallback(GLenum source, GLenum type, GLuint id, GLenum sev, GLsizei length, const GLchar* message, const void* userParam)
+{
+    std::cout << source << ":" << type << ":" << id << ":" << sev << message << std::endl;
 }
 
 int main()
 {
+    srand(10);
     const glm::vec3 lightDir(1.0, 1.0, 1.0);
 
     GLFWwindow* window = setupWindow(WIDTH, HEIGHT);
     setupGlad();
+    glDebugMessageCallback(debugCallback, nullptr);
 
     glm::mat4 perspectiveTransform = glm::perspective(glm::radians(45.0), (double) WIDTH / HEIGHT, 0.1, 1000.0);
 
@@ -223,9 +351,28 @@ int main()
         
     int layerIndex = 16;
     long frameCount = 0;
-    glm::vec3 chunkPosition = glm::vec3(-1.0f);
-    generate_chunk_value(quadVao, chunkPosition, renderImageFramebuffer, text3DProgram);
-    ChunkMeshOutput chunkOutput = generateChunkMesh(chunkPosition, renderImageFramebuffer);
+
+    GLuint noiseTexture1 = createNoiseTexture(noise1);
+    GLuint noiseTexture2 = createNoiseTexture(noise2);
+    GLuint noiseTexture3 = createNoiseTexture(noise3);
+    GLuint noiseTexture4 = createNoiseTexture(noise4);
+
+    NoiseTextures noiseTextures { noiseTexture1, noiseTexture2, noiseTexture3, noiseTexture4};
+    initChunksToCreate();
+
+    std::cout << "Creating chunks" << std::endl;
+
+    //using std::chrono::high_resolution_clock;
+    //using std::chrono::duration_cast;
+    //using std::chrono::milliseconds;
+    //for (auto chunk : chunksToCreate)
+    //{
+        ////auto t1 = high_resolution_clock::now();
+        //createChunk(quadVao,renderImageFramebuffer,text3DProgram);
+        ////auto t2 = high_resolution_clock::now();
+        ////auto ms_int = duration_cast<milliseconds>(t2 - t1);
+     ////   std::cout << ms_int.count() << "ms" << std::endl;
+    //}
     while (!glfwWindowShouldClose(window))
     {
         float currentTime = glfwGetTime();
@@ -233,10 +380,12 @@ int main()
         previousTime = currentTime;
 
         handleInputs(window);
+        createChunk(quadVao,renderImageFramebuffer,text3DProgram, noiseTextures);
 
         glViewport(0, 0, WIDTH, HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, createdChunks[1].meshOutput.feedbackObj);
         finalRenderShader.use();
         glm::mat4 cameraTransfrom = camera->GetViewMatrix();
         finalRenderShader.setFloatMat4("uWorldTransform", (float*) glm::value_ptr(glm::mat4(1.0)));
@@ -244,32 +393,37 @@ int main()
         finalRenderShader.setFloatMat4("uPerspectiveTransform", glm::value_ptr(perspectiveTransform));
         finalRenderShader.setVec3("uLightDir", (float*) glm::value_ptr(lightDir));
 
-        glBindVertexArray(chunkOutput.vao); 
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
+        for (Chunk chunk : createdChunks)
+        {
+            glBindVertexArray(chunk.meshOutput.vao); 
+            glBindBuffer(GL_ARRAY_BUFFER, chunk.meshOutput.bufferBase);
+            //if (frameCount == 0) {
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
 
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
-        glDrawTransformFeedback(GL_TRIANGLES, chunkOutput.feedbackObj);
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
 
-        //if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
-        //{
-            //layerIndex = (layerIndex + 1) % 33;
-        //}
-
-        //postRenderProgram.use();
-        //postRenderProgram.setInt("layerIndex", layerIndex);
-        //glBindVertexArray(quadVao);
-        //glActiveTexture(0);
-        //glBindTexture(GL_TEXTURE_3D, renderImageFramebuffer.texture);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+            glDrawTransformFeedback(GL_TRIANGLES, chunk.meshOutput.feedbackObj);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        frameCount += 1; 
     }
 
     return 0;

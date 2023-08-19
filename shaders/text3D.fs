@@ -8,14 +8,16 @@ uniform vec3 chunkPosition;
 uniform float planeZLocal;
 
 // noise funciton in worldspace
-float calculate_sphere_val(vec3 coord)
+float calculate_sphere_val(vec3 p)
 {
-    return pow(0.9, 2) - pow(coord.x, 2.0) - pow(coord.y, 2.0) - pow(coord.z, 2.0);
+    //return pow(0.5, 2) - pow(p.x, 2.0) - pow(p.y, 2.0) - pow(p.z, 2.0);
+    return -p.y;
 }
 
 void main()
 {
+    // Get the z world coordinate. PlaneZLocal is already adjusted for stepsize.
     float zWorld = chunkPosition.z + planeZLocal;
     float sphere_val = calculate_sphere_val(vec3(vPos, zWorld));
-    voxelValue = sphere_val;
+    voxelValue = vPos.y;
 }

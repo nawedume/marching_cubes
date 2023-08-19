@@ -547,7 +547,11 @@ ivec2 EDGE_TO_VERTICES_LIST[12] = ivec2[12](
 );
 
 
-uniform sampler3D screenTexture;
+uniform sampler3D noiseTexture1;
+uniform sampler3D noiseTexture2;
+uniform sampler3D noiseTexture3;
+uniform sampler3D noiseTexture4;
+
 uniform vec3 uChunkPosition;
 uniform float uNumVoxelsPerDim;
 uniform float uVoxelSize;
@@ -558,31 +562,43 @@ layout (triangle_strip, max_vertices = 12) out;
 out vec3 outVec;
 out vec3 outNormal;
 
-float mSample(vec3 coord)
+/**
+* p is in worldl space.
+**/
+float sampleDensityFn(vec3 p)
 {
-    return texture(screenTexture, coord).x;// min(texture(screenTexture, coord).x, 0.0);
+    
+    float density = -p.y;
+    vec3 ws = p / 8.0;
+    density += texture(noiseTexture1, ws).x * 0.3; // high freq
+    density += texture(noiseTexture2, ws * 0.22).x * 0.5; // high freq
+    density += texture(noiseTexture3, ws * 0.05).x * 1.53; // high freq
+    density += texture(noiseTexture4, ws * 0.015).x * 3.53; // high freq
+    density += texture(noiseTexture4, ws * 0.002).x * 9.98; // high freq
+    
+
+
+    return density;
 }
 
 /**
 * IMPORTANT! Assumes vector is one of the corner vectors
 */
-vec3 get_normal_for_vec(vec3 corner_vector, vec3 local_pos)
+vec3 get_normal_for_vec(vec3 corner_vector)
 {
-    const float chunkWidth = uVoxelSize * uNumVoxelsPerDim;
-    const vec3 offset_x = vec3(1.0, 0.0, 0.0) / uNumVoxelsPerDim;
-    const vec3 offset_y = vec3(0.0, 1.0, 0.0) / uNumVoxelsPerDim;
-    const vec3 offset_z = vec3(0.0, 0.0, 1.0) / uNumVoxelsPerDim;
-    vec3 base_coord = (corner_vector + local_pos) / chunkWidth;
+    const vec3 offset_x = vec3(uVoxelSize, 0.0, 0.0);
+    const vec3 offset_y = vec3(0.0, uVoxelSize, 0.0);
+    const vec3 offset_z = vec3(0.0, 0.0, uVoxelSize);
 
     vec3 normal;
-    normal.x = mSample(base_coord + offset_x) - mSample(base_coord - offset_x);
-    normal.y = mSample(base_coord + offset_y) - mSample(base_coord - offset_y);
-    normal.z = mSample(base_coord + offset_z) - mSample(base_coord - offset_z);
+    normal.x = sampleDensityFn(corner_vector + offset_x) - sampleDensityFn(corner_vector - offset_x);
+    normal.y = sampleDensityFn(corner_vector + offset_y) - sampleDensityFn(corner_vector - offset_y);
+    normal.z = sampleDensityFn(corner_vector + offset_z) - sampleDensityFn(corner_vector - offset_z);
 
     return -normalize(normal);
 }
 
-void emitVertex(int edge, float corner_vals[8], float samplerOffset, vec3 local_pos)
+void emitVertex(int edge, float corner_vals[8], int config)
 {
     ivec2 edge_vertices = EDGE_TO_VERTICES_LIST[edge];
     vec3 v1 = CORNER_VECTORS[edge_vertices.x];
@@ -597,49 +613,41 @@ void emitVertex(int edge, float corner_vals[8], float samplerOffset, vec3 local_
     vec3 vertex_chunk_space = (interpolated_vertex * uVoxelSize) + gl_in[0].gl_Position.xyz;
     outVec.xyz = vertex_chunk_space + uChunkPosition;
     
-    //vec3 samplerCoord = vertex_chunk_space / uChunkWidth;
-    //outNormal.x = mSample(samplerCoord + vec3(samplerOffset, 0.0, 0.0)) - mSample(samplerCoord - vec3(samplerOffset, 0.0, 0.0));
-    //outNormal.y = mSample(samplerCoord + vec3(0.0, samplerOffset, 0.0)) - mSample(samplerCoord - vec3(0.0, samplerOffset, 0.0));
-    //outNormal.z = mSample(samplerCoord + vec3(0.0, 0.0, samplerOffset)) - mSample(samplerCoord - vec3(0.0, 0.0, samplerOffset));
-    //// have to negate it because the gradient points to the direction of highest density.
-    //outNormal = -normalize(outNormal);
+    //vec3 v1_normal = get_normal_for_vec(v1 * uVoxelSize + uChunkPosition);
+    //vec3 v2_normal = get_normal_for_vec(v2 * uVoxelSize + uChunkPosition);
+    //vec3 normal = ((1 - alpha) * v1_normal) + (alpha * v2_normal);
+    outNormal = get_normal_for_vec(outVec);// normalize(normal);
 
-    vec3 v1_normal = get_normal_for_vec(v1 * uVoxelSize, local_pos);
-    vec3 v2_normal = get_normal_for_vec(v2 * uVoxelSize, local_pos);
-    vec3 normal = ((1 - alpha) * v1_normal) + (alpha * v2_normal);
-    outNormal = normalize(normal);
     EmitVertex();
 }
 
 void main()
 {
-    vec3 local_pos = gl_in[0].gl_Position.xyz;
-    vec3 samplerCoord = gl_in[0].gl_Position.xyz / (uNumVoxelsPerDim * uVoxelSize);
-    float samplerOffset = 1.0 / uNumVoxelsPerDim;
-    float corner_vals[8];
-    corner_vals[0] = texture(screenTexture, samplerCoord).x;
-    corner_vals[1] = texture(screenTexture, samplerCoord + vec3(samplerOffset, 0.0, 0.0)).x;
-    corner_vals[2] = texture(screenTexture, samplerCoord + vec3(samplerOffset, 0.0, -samplerOffset)).x;
-    corner_vals[3] = texture(screenTexture, samplerCoord + vec3(0.0, 0.0, -samplerOffset)).x;
-    corner_vals[4] = texture(screenTexture, samplerCoord + vec3(0.0, samplerOffset, 0.0)).x;
-    corner_vals[5] = texture(screenTexture, samplerCoord + vec3(samplerOffset, samplerOffset, 0.0)).x;
-    corner_vals[6] = texture(screenTexture, samplerCoord + vec3(samplerOffset, samplerOffset, -samplerOffset)).x;
-    corner_vals[7] = texture(screenTexture, samplerCoord + vec3(0.0, samplerOffset, -samplerOffset)).x;
 
+    float corner_vals[8];
+    vec3 global_voxel_pos = gl_in[0].gl_Position.xyz + uChunkPosition;
+    corner_vals[0] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[0] * uVoxelSize));
+    corner_vals[1] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[1] * uVoxelSize));
+    corner_vals[2] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[2] * uVoxelSize));
+    corner_vals[3] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[3] * uVoxelSize));
+    corner_vals[4] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[4] * uVoxelSize));
+    corner_vals[5] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[5] * uVoxelSize));
+    corner_vals[6] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[6] * uVoxelSize));
+    corner_vals[7] = sampleDensityFn(global_voxel_pos + (CORNER_VECTORS[7] * uVoxelSize));
 
     int config = 0;
     for (int i = 0; i < 8; i++)
     {
-        config |= (int((corner_vals[i] < 0.0)) << i);
+        config |= (int((corner_vals[i] <= 0.0)) << i);
     }
     
     int edges[12] = CONFIG_TO_EDGE_LIST[config];
     int edge_count = CONFIG_TO_VERTEX_COUNT[config];
     for (int i = 0; i < edge_count; i += 3)
     {
-        emitVertex(edges[i], corner_vals, samplerOffset, local_pos);
-        emitVertex(edges[i+1], corner_vals, samplerOffset, local_pos);
-        emitVertex(edges[i+2], corner_vals, samplerOffset, local_pos);
+        emitVertex(edges[i], corner_vals, config);
+        emitVertex(edges[i+1], corner_vals, config);
+        emitVertex(edges[i+2], corner_vals, config);
         EndPrimitive();
     }   
 }
