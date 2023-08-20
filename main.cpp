@@ -25,11 +25,11 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const float X_MIN = -5.0f;
+const float X_MIN = 0.0f;
 const float X_MAX = 5.0f;
 const float Y_MIN = -1.0f;
-const float Y_MAX = 1.0f;
-const float Z_MIN = -5.0f;
+const float Y_MAX = 5.0f;
+const float Z_MIN = 0.0f;
 const float Z_MAX = 5.0f;
 
 const float UNIT_SIZE = 1.0f / 16.0f;
@@ -56,15 +56,13 @@ DataMat noise2 = gen_3d_noise(16);
 DataMat noise3 = gen_3d_noise(16);
 DataMat noise4 = gen_3d_noise(16);
 
+GradNoise gradNoise;
+
 float density_fn(glm::vec3 vertex)
 {
 	float density = -vertex.y;
-	density += noise1.get(vertex * 5.0f) * 0.05f;
-	density += noise2.get(vertex * 2.46f) * 0.10f;
-	density += noise3.get(vertex * 1.21f) * 0.20f;
+  density += gradNoise.sample(vertex);
 
-	density += noise4.get(vertex * 0.5f) * 2.0f;
-	
 	return density ;
 }
 
@@ -198,6 +196,7 @@ GLuint mVAO;
 int main() {
 	// replace with time if needed
 	srand(123);
+  init_grad_vecs(123);
 	
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);

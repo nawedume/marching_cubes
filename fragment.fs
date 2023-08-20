@@ -29,5 +29,5 @@ void main() {
     vec3 specular = specularStrength * spec * lightColor;  
 
 	color = color * (ds + ambience + specular);
-	FragColor = texture(ourTexture, textcoord) * clamp(vec4(color, 1.0),0.0, 1.0);
+	FragColor = texture(ourTexture, textcoord * 0.2) * clamp(vec4(color, 1.0),0.0, 1.0);
 }
