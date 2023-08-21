@@ -744,9 +744,13 @@ vec3 getVertex(int edge, float corner_vals[8], int config)
     vec3 vertex_chunk_space = (interpolated_vertex * uVoxelSize) + gl_in[0].gl_Position.xyz;
     vec3 newVertex = vertex_chunk_space + uChunkPosition;
 
-//    vec3 normal1 = get_normal_for_vec((v1 * uVoxelSize) + gl_in[0].gl_Position.xyz);
-//    vec3 normal2 = get_normal_for_vec((v2 * uVoxelSize) + gl_in[0].gl_Position.xyz);
-//    outNormal = mix(normal1, normal2, 1- alpha);
+    vec3 normal1 = get_normal_for_vec((v1 * uVoxelSize) + gl_in[0].gl_Position.xyz + uChunkPosition);
+    vec3 normal2 = get_normal_for_vec((v2 * uVoxelSize) + gl_in[0].gl_Position.xyz + uChunkPosition);
+
+    outVec = newVertex;
+    outNormal = mix(normal1, normal2, alpha);
+
+    EmitVertex();
     return newVertex;
 }
 
@@ -778,18 +782,6 @@ void main()
         vec3 v2 = getVertex(edges[i+1], corner_vals, config);
         vec3 v3 = getVertex(edges[i+2], corner_vals, config);
 
-        vec3 normal = (normalize(cross(v2 - v1, v3 - v1)));
-        if (dot(vec3(0.0, 1.0, 0.0), normal) < 0.0) normal = -normal;
-
-        outVec = v1;
-        outNormal = normal;
-        EmitVertex();
-        outVec = v2;
-        outNormal = normal;
-        EmitVertex();
-        outVec = v3;
-        outNormal = normal;
-        EmitVertex();
         EndPrimitive();
     }   
 }
