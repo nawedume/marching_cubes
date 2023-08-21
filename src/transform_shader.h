@@ -32,6 +32,7 @@ public:
         vShaderFile.exceptions( std::ifstream::failbit | std::ifstream::badbit );
         vGeoFile.exceptions( std::ifstream::failbit | std::ifstream::badbit );
         
+        printf("Opening files\n");
         try
         {
             // open files
@@ -56,6 +57,7 @@ public:
         
         const char* vShaderCode = vertexCode.c_str();
         const char* gShaderCode = geometryCode.c_str();
+        printf("Got shader code %d, %d\n", vertexCode.size(), geometryCode.size());
 
         unsigned int vertex, geometry;
         int success;
@@ -71,6 +73,7 @@ public:
             std::cout << "avasaERROR::VERTEX_SHADER::COMPILATION_FAILED::" << vertexPath << ":" << infoLog << std::endl;
             exit(1);
         }
+        printf("Created vertex shader\n");
 
         geometry = glCreateShader(GL_GEOMETRY_SHADER);
         glShaderSource(geometry, 1, &gShaderCode, NULL);
@@ -82,12 +85,15 @@ public:
             std::cout << "ERROR::GEOMETRY_SHADER::COMPILATION_FAILED" << infoLog << std::endl;
             exit(1);
         }
+        printf("Created geo shader\n");
 
         ID = glCreateProgram();
         glAttachShader(ID, vertex);
         glAttachShader(ID, geometry);
         glTransformFeedbackVaryings(ID, params.varyingsCount, params.varyings, params.bufferMode);
+        printf("Linking....\n");
         glLinkProgram(ID);
+        printf("Linked\n");
         glGetProgramiv(ID, GL_LINK_STATUS, &success);
         if (!success)
         {
@@ -95,7 +101,7 @@ public:
             std::cout << "ERROR::PROGRAM::LINK_FAILED" << infoLog << std::endl;
             exit(1);
         }
-
+        printf("Created and linked program\n");
         glDeleteShader(vertex);
         glDeleteShader(geometry);
     }
@@ -125,6 +131,16 @@ public:
     void setVec3(const std::string& name, float* value) const
     {
         glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, value);
+    }
+
+    void setFloatArray(const std::string& name, int size, float* value)
+    {
+      glUniform1fv(glGetUniformLocation(ID, name.c_str()), size, value);
+    }
+
+    void setFloatArray(const std::string& name, int size, const int* value)
+    {
+      glUniform1iv(glGetUniformLocation(ID, name.c_str()), size, value);
     }
 };
 

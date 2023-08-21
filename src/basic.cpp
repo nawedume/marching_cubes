@@ -35,7 +35,7 @@ struct GlobalChunkConfig
 
 GlobalChunkConfig GLOBAL_CHUNK_CONFIG {
     32,
-    8.0f / 32.0f
+    1.0f
 };
 
 struct Texture3DBuffer {
@@ -149,11 +149,11 @@ std::vector<Chunk> createdChunks;
 void initChunksToCreate()
 {
     int BOUND_X_START = 0;
-    int BOUND_X_END = 10;
+    int BOUND_X_END = 1;
     int BOUND_Y_START = -3;
     int BOUND_Y_END = 3;
     int BOUND_Z_START = 0;
-    int BOUND_Z_END = 10;
+    int BOUND_Z_END = 1;
     float worldChunkWidth = GLOBAL_CHUNK_CONFIG.numVoxelsPerDim * GLOBAL_CHUNK_CONFIG.voxelSize;
     for (int i = BOUND_X_START; i < BOUND_X_END; i++)
     {
@@ -197,7 +197,9 @@ ChunkMeshOutput generateChunkMesh(glm::vec3 chunkPosition, Texture3DBuffer rende
     .varyingsCount = 2,
     .bufferMode = GL_INTERLEAVED_ATTRIBS 
     };
+    printf("Linking Shader\n");
     TransformShader mcBufferShader("./shaders/mc.vs", "./shaders/mc.gs", params);
+    printf("Done Shader creation\n");
     // generate a cube buffer;
     std::vector<float> cubeVertices;
     for (int i = 0; i < GLOBAL_CHUNK_CONFIG.numVoxelsPerDim; i++)
@@ -288,11 +290,13 @@ void createChunk(GLuint quadVao, Texture3DBuffer textureBuffer, Shader texturePr
         return;
     }
 
+    printf("Creating a chunk\n");
     glm::vec3 chunkToCreate = chunksToCreate.back();
     chunksToCreate.pop_back();
     ChunkMeshOutput meshOutput = generateChunkMesh(chunkToCreate, textureBuffer, noiseTextures);
     Chunk chunk { .meshOutput = meshOutput, .position = chunkToCreate };
     createdChunks.push_back(chunk);
+    printf("Finished creating a chunk\n");
 }
 
 void debugCallback(GLenum source, GLenum type, GLuint id, GLenum sev, GLsizei length, const GLchar* message, const void* userParam)
@@ -364,6 +368,84 @@ int main()
 
     //using std::chrono::high_resolution_clock;
     //using std::chrono::duration_cast;
+            //if (frameCount == 0) {
+            //if (frameCount == 0) {
+            //if (frameCount == 0) {
+            //if (frameCount == 0) {
+            //if (frameCount == 0) {
+            //if (frameCount == 0) {
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
+
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
+
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
+
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
+
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
+
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
+              //std::cout << "FIRST FRAME===========================" << std::endl;
+                //print_vec(chunk.position);
+
+            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
+            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
+            //float subdata[32*32*32][3];
+            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
+            //for (int i = 0; i < 30; i += 2)
+            //{
+                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
+            //}
     //using std::chrono::milliseconds;
     //for (auto chunk : chunksToCreate)
     //{
@@ -398,21 +480,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (Chunk chunk : createdChunks)
         {
+            
             glBindVertexArray(chunk.meshOutput.vao); 
             glBindBuffer(GL_ARRAY_BUFFER, chunk.meshOutput.bufferBase);
-            //if (frameCount == 0) {
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
 
@@ -429,11 +499,17 @@ int main()
     return 0;
 }
 
+void glfwErrorCallback(int code, const char* desc)
+{
+  printf("GLFW Error: %d :: %s\n", code, desc);
+}
+
 GLFWwindow* setupWindow(int width, int height)
 {
     glfwInit();
+    glfwSetErrorCallback(glfwErrorCallback);
 
-    glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GL_TRUE);
+    //glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GL_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
