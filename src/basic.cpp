@@ -35,7 +35,7 @@ struct GlobalChunkConfig
 
 GlobalChunkConfig GLOBAL_CHUNK_CONFIG {
     32,
-    1.0f
+    4.0f
 };
 
 struct Texture3DBuffer {
@@ -149,11 +149,11 @@ std::vector<Chunk> createdChunks;
 void initChunksToCreate()
 {
     int BOUND_X_START = 0;
-    int BOUND_X_END = 1;
+    int BOUND_X_END = 6 ;
     int BOUND_Y_START = -3;
-    int BOUND_Y_END = 3;
-    int BOUND_Z_START = 0;
-    int BOUND_Z_END = 1;
+    int BOUND_Y_END = 6;
+    int BOUND_Z_START = 0 ;
+    int BOUND_Z_END = 6;
     float worldChunkWidth = GLOBAL_CHUNK_CONFIG.numVoxelsPerDim * GLOBAL_CHUNK_CONFIG.voxelSize;
     for (int i = BOUND_X_START; i < BOUND_X_END; i++)
     {

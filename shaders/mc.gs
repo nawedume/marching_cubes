@@ -611,7 +611,7 @@ out vec3 outNormal;
 float grad(int hash, float x, float y, float z)
 {
   hash = hash & 0xF;
-  return dot(vec3(x, y, z), GRAD_MAP[hash]);
+  return dot(vec3(x, y, z), GRAD_MAP[hash]) / 1.998;
 }
 
 float fade(float t)
@@ -678,9 +678,11 @@ float perlin_noise(vec3 vec)
 **/
 float sampleDensityFn(vec3 p)
 {
-    p = p / 8.0;
-    float density = 0.0;// -p.y;
-    density += perlin_noise(p );
+    float density =  -p.y;
+    vec3 np = p / 1000.0;
+    density += perlin_noise( np ) * 200.0;
+    density += perlin_noise((np + vec3(13, 34, 102)) * 2.1) * 499.0;
+
     return density;
 }
 
