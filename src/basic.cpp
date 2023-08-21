@@ -35,7 +35,7 @@ struct GlobalChunkConfig
 
 GlobalChunkConfig GLOBAL_CHUNK_CONFIG {
     32,
-    4.0f
+    10.0f
 };
 
 struct Texture3DBuffer {
@@ -168,17 +168,8 @@ void initChunksToCreate()
             }
         }
     }
-    //chunksToCreate.push_back(glm::vec3(0.0));
-    //chunksToCreate.push_back(glm::vec3(-1.0, 0.0, 0.0));
-    //chunksToCreate.push_back(glm::vec3(-1.0, 1.0, 0.0));
 
     std::cout << chunksToCreate.size() << std::endl;
-    //for (int i = 0; i < chunksToCreate.size(); i++)
-
-    //{
-        //std::cout << chunksToCreate[i].x << ", " << chunksToCreate[i].y << ", " << chunksToCreate[i].z << std::endl;
-    //}
-
 }
 
 struct NoiseTextures
@@ -313,7 +304,7 @@ int main()
     setupGlad();
     glDebugMessageCallback(debugCallback, nullptr);
 
-    glm::mat4 perspectiveTransform = glm::perspective(glm::radians(45.0), (double) WIDTH / HEIGHT, 0.1, 1000.0);
+    glm::mat4 perspectiveTransform = glm::perspective(glm::radians(45.0), (double) WIDTH / HEIGHT, 0.1, 10000.0);
 
     Shader finalRenderShader("./shaders/basic.vs", "./shaders/basic.fs");
 

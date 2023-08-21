@@ -672,6 +672,25 @@ float perlin_noise(vec3 vec)
   return mix(y1, y2, w);
 };
 
+bool eq(float x, float y)
+{
+  const float eps = 0.01;
+  return abs(x - y) < eps;
+}
+
+float pnoise(vec3 p)
+{
+  const float eps = 0.01;
+  if (eq(fract(p.x), 0.0) && eq(fract(p.y), 0.0) && eq(fract(p.z), 0.0))
+  {
+    const float nstep = 0.01;
+
+    float d1 = perlin_noise(p + vec3(nstep, -nstep, nstep));
+    float d2 = perlin_noise(p + vec3(-nstep, nstep, -nstep));
+    return mix(d1, d2, 0.5);
+  }
+  return perlin_noise(p);
+}
 
 /**
 * p is in worldl space.
@@ -680,8 +699,9 @@ float sampleDensityFn(vec3 p)
 {
     float density =  -p.y;
     vec3 np = p / 1000.0;
-    density += perlin_noise( np ) * 200.0;
-    density += perlin_noise((np + vec3(13, 34, 102)) * 2.1) * 499.0;
+    density += pnoise( np ) * 500.0;
+    density += pnoise((np + vec3(13, 34, 102)) * 2.1) * 200.0;
+    density += pnoise((np + vec3(113, 41, 231)) * 4.11) * 100.0;
 
     return density;
 }
