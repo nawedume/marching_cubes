@@ -692,26 +692,32 @@ float pnoise(vec3 p)
   return perlin_noise(p);
 }
 
+vec3 distort(vec3 v)
+{
+  return vec3(v.x + sin(v.x), v.y, v.z + sin(v.z));
+}
+
+float fbm(vec3 p)
+{
+    vec3 np = p / 1000.0;
+    float density = 0.0;
+    density += pnoise(( np )) * 500.0;
+    density += pnoise((np + vec3(113, 41, 231)) * 10.11) * 10.0;
+    return density;
+}
+
 /**
 * p is in worldl space.
 **/
 float sampleDensityFn(vec3 p)
 {
-    float density =  -p.y;
-    vec3 np = p / 1000.0;
-    density += pnoise( np ) * 500.0;
-    density += pnoise((np + vec3(13, 34, 102)) * 2.1) * 200.0;
-    density += pnoise((np + vec3(113, 41, 231)) * 4.11) * 100.0;
-
-    return density;
+  vec3 q = vec3(fbm(p), fbm(p + vec3(5.2, 1.3, 2.7)), fbm(p - vec3(0.3, 6.4, 3.5)));
+  return fbm(p + 4.0*q) - p.y;
 }
 
-/**
-* IMPORTANT! Assumes vector is one of the corner vectors
-*/
 vec3 get_normal_for_vec(vec3 corner_vector)
 {
-    const vec3 offset_x = vec3(uVoxelSize, 0.0, 0.0);
+    const vec3 offset_x = vec3(uVoxelSize, 0.0, 0.0) ;
     const vec3 offset_y = vec3(0.0, uVoxelSize, 0.0);
     const vec3 offset_z = vec3(0.0, 0.0, uVoxelSize);
 
@@ -723,7 +729,7 @@ vec3 get_normal_for_vec(vec3 corner_vector)
     return -normalize(normal);
 }
 
-void emitVertex(int edge, float corner_vals[8], int config)
+vec3 getVertex(int edge, float corner_vals[8], int config)
 {
     ivec2 edge_vertices = EDGE_TO_VERTICES_LIST[edge];
     vec3 v1 = CORNER_VECTORS[edge_vertices.x];
@@ -736,9 +742,12 @@ void emitVertex(int edge, float corner_vals[8], int config)
 
     // Move the interpolated poitn into worls space
     vec3 vertex_chunk_space = (interpolated_vertex * uVoxelSize) + gl_in[0].gl_Position.xyz;
-    outVec.xyz = vertex_chunk_space + uChunkPosition;
-    outNormal = get_normal_for_vec(outVec);// normalize(normal);
-    EmitVertex();
+    vec3 newVertex = vertex_chunk_space + uChunkPosition;
+
+//    vec3 normal1 = get_normal_for_vec((v1 * uVoxelSize) + gl_in[0].gl_Position.xyz);
+//    vec3 normal2 = get_normal_for_vec((v2 * uVoxelSize) + gl_in[0].gl_Position.xyz);
+//    outNormal = mix(normal1, normal2, 1- alpha);
+    return newVertex;
 }
 
 void main()
@@ -765,9 +774,22 @@ void main()
     int edge_count = CONFIG_TO_VERTEX_COUNT[config];
     for (int i = 0; i < edge_count; i += 3)
     {
-        emitVertex(edges[i], corner_vals, config);
-        emitVertex(edges[i+1], corner_vals, config);
-        emitVertex(edges[i+2], corner_vals, config);
+        vec3 v1 = getVertex(edges[i], corner_vals, config);
+        vec3 v2 = getVertex(edges[i+1], corner_vals, config);
+        vec3 v3 = getVertex(edges[i+2], corner_vals, config);
+
+        vec3 normal = (normalize(cross(v2 - v1, v3 - v1)));
+        if (dot(vec3(0.0, 1.0, 0.0), normal) < 0.0) normal = -normal;
+
+        outVec = v1;
+        outNormal = normal;
+        EmitVertex();
+        outVec = v2;
+        outNormal = normal;
+        EmitVertex();
+        outVec = v3;
+        outNormal = normal;
+        EmitVertex();
         EndPrimitive();
     }   
 }

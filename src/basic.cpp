@@ -304,7 +304,7 @@ int main()
     setupGlad();
     glDebugMessageCallback(debugCallback, nullptr);
 
-    glm::mat4 perspectiveTransform = glm::perspective(glm::radians(45.0), (double) WIDTH / HEIGHT, 0.1, 10000.0);
+    glm::mat4 perspectiveTransform = glm::perspective(glm::radians(45.0), (double) WIDTH / HEIGHT, 0.5, 10000.0);
 
     Shader finalRenderShader("./shaders/basic.vs", "./shaders/basic.fs");
 
