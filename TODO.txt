@@ -1,0 +1,3 @@
+Double check and potentially fix the voxel size calculations.
+Add textures to the terrain with tri-planar texturing
+

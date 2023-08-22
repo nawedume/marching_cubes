@@ -711,8 +711,13 @@ float fbm(vec3 p)
 **/
 float sampleDensityFn(vec3 p)
 {
-  vec3 q = vec3(fbm(p), fbm(p + vec3(5.2, 1.3, 2.7)), fbm(p - vec3(0.3, 6.4, 3.5)));
-  return fbm(p + 4.0*q) - p.y;
+//  vec3 q = vec3(fbm(p), fbm(p + vec3(5.2, 1.3, 2.7)), fbm(p - vec3(0.3, 6.4, 3.5)));
+//  return fbm(p + 4.0*q) - p.y;
+
+  p = p / 300.0;
+  float d = perlin_noise(p + 3 * noise1(p)) - p.y + 1.0;
+  return d;
+
 }
 
 vec3 get_normal_for_vec(vec3 corner_vector)

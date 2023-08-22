@@ -10,6 +10,7 @@
 #include <chrono>
 #include <random>
 #include "noise.hpp"
+#include "texture.hpp"
 
 float previousTime = 0.0;
 float deltaTime = 1.0f / 60.0f;
@@ -149,11 +150,11 @@ std::vector<Chunk> createdChunks;
 void initChunksToCreate()
 {
     int BOUND_X_START = 0;
-    int BOUND_X_END = 6 ;
-    int BOUND_Y_START = -3;
-    int BOUND_Y_END = 6;
+    int BOUND_X_END = 5 ;
+    int BOUND_Y_START = 0;
+    int BOUND_Y_END = 3 ;
     int BOUND_Z_START = 0 ;
-    int BOUND_Z_END = 6;
+    int BOUND_Z_END = 5;
     float worldChunkWidth = GLOBAL_CHUNK_CONFIG.numVoxelsPerDim * GLOBAL_CHUNK_CONFIG.voxelSize;
     for (int i = BOUND_X_START; i < BOUND_X_END; i++)
     {
@@ -307,6 +308,9 @@ int main()
     glm::mat4 perspectiveTransform = glm::perspective(glm::radians(45.0), (double) WIDTH / HEIGHT, 0.5, 10000.0);
 
     Shader finalRenderShader("./shaders/basic.vs", "./shaders/basic.fs");
+    finalRenderShader.use();
+    finalRenderShader.setInt("rockTexture", 0);
+    finalRenderShader.setInt("groundTexture", 1);
 
 
     Texture3DBuffer renderImageFramebuffer = createFramebuffer();
@@ -357,95 +361,8 @@ int main()
 
     std::cout << "Creating chunks" << std::endl;
 
-    //using std::chrono::high_resolution_clock;
-    //using std::chrono::duration_cast;
-            //if (frameCount == 0) {
-            //if (frameCount == 0) {
-            //if (frameCount == 0) {
-            //if (frameCount == 0) {
-            //if (frameCount == 0) {
-            //if (frameCount == 0) {
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
-              //std::cout << "FIRST FRAME===========================" << std::endl;
-                //print_vec(chunk.position);
-
-            //std::cout << createdChunks[0].meshOutput.vao << ", " << createdChunks[0].meshOutput.feedbackObj << ", " << createdChunks[0].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[1].meshOutput.vao << ", " << createdChunks[1].meshOutput.feedbackObj << ", " << createdChunks[1].meshOutput.bufferBase << std::endl;
-            //std::cout << createdChunks[2].meshOutput.vao << ", " << createdChunks[2].meshOutput.feedbackObj << ", " << createdChunks[2].meshOutput.bufferBase << std::endl;
-            //float subdata[32*32*32][3];
-            //glGetBufferSubData(GL_ARRAY_BUFFER, 0, 10000, subdata);
-            //for (int i = 0; i < 30; i += 2)
-            //{
-                //print_vec(glm::vec3(subdata[i][0], subdata[i][1], subdata[i][2]));
-            //}
-    //using std::chrono::milliseconds;
-    //for (auto chunk : chunksToCreate)
-    //{
-        ////auto t1 = high_resolution_clock::now();
-        //createChunk(quadVao,renderImageFramebuffer,text3DProgram);
-        ////auto t2 = high_resolution_clock::now();
-        ////auto ms_int = duration_cast<milliseconds>(t2 - t1);
-     ////   std::cout << ms_int.count() << "ms" << std::endl;
-    //}
+    GLuint groundTexture = generate_texture_2d("assets/leaves.jpg", GL_RGB);
+    GLuint rockTexture = generate_texture_2d("assets/rock.jpg", GL_RGB);
     while (!glfwWindowShouldClose(window))
     {
         float currentTime = glfwGetTime();
@@ -465,6 +382,11 @@ int main()
         finalRenderShader.setFloatMat4("uCameraTransform", glm::value_ptr(cameraTransfrom));
         finalRenderShader.setFloatMat4("uPerspectiveTransform", glm::value_ptr(perspectiveTransform));
         finalRenderShader.setVec3("uLightDir", (float*) glm::value_ptr(lightDir));
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, rockTexture);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, groundTexture);
 
         glEnable(GL_DEPTH_TEST);
         glClearColor(0.0, 0.0, 0.0, 1.0);
