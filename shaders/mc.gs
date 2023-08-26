@@ -697,12 +697,11 @@ vec3 distort(vec3 v)
   return vec3(v.x + sin(v.x), v.y, v.z + sin(v.z));
 }
 
-float fbm(vec3 p)
+float fbm(vec3 np)
 {
-    vec3 np = p / 1000.0;
     float density = 0.0;
-    density += pnoise(( np )) * 500.0;
-    density += pnoise((np + vec3(113, 41, 231)) * 10.11) * 10.0;
+    density += pnoise(( np )) ;
+    density += pnoise((np + vec3(113, 41, 231)) * 1.5) * 0.38;
     return density;
 }
 
@@ -715,7 +714,7 @@ float sampleDensityFn(vec3 p)
 //  return fbm(p + 4.0*q) - p.y;
 
   p = p / 300.0;
-  float d = perlin_noise(p + 3 * noise1(p)) - p.y + 1.0;
+  float d = fbm(p + 3 * fbm(p)) - p.y + 1.0;
   return d;
 
 }

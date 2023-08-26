@@ -40,9 +40,8 @@ void main()
     //vec3 textureColor = abs(normal.x)*rock1 + abs(normal.z)*rock2 + abs(normal.y)*ground;
     vec4 ground = get_texture_color(groundTexture, vPos / 100.0, blending);
     vec4 rock = get_texture_color(rockTexture, vPos / 100.0, blending);
-    vec4 textureColor = tilt > 0.5 ? ground : rock;
+    vec4 textureColor = tilt > 0.6 ? ground : rock;
 
     vec3 color = textureColor.xyz;
-    
     outColor = clamp(vec4(color * (ambientStrength + diffuseStrength), 1.0), 0.0, 1.0);
 }
