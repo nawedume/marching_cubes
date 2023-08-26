@@ -1,5 +1,6 @@
 EXE = build.out
 LIB_DIR = lib
+INCLUDE_DIR = include
 BUILD_DIR = build/
 $(shell mkdir -p $(BUILD_DIR))
 
@@ -9,7 +10,7 @@ LIBS = $(LIB_DIR)/glad.cpp
 
 OBJS = $(addprefix $(BUILD_DIR), $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 
-CXXFLAGS = -std=c++17 -lglfw -I./lib/glm -I./lib
+CXXFLAGS = -std=c++17 -lglfw -I./include
 
 ECHO_MESSAGE = "Linux"
 
