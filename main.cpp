@@ -25,11 +25,11 @@ void getVertexCoordinates(int xIndex, int yIndex, int zIndex, float arr[8][3]);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const float X_MIN = 0.0f;
+const float X_MIN = -5.0f;
 const float X_MAX = 5.0f;
 const float Y_MIN = -1.0f;
 const float Y_MAX = 5.0f;
-const float Z_MIN = 0.0f;
+const float Z_MIN = -5.0f;
 const float Z_MAX = 5.0f;
 
 const float UNIT_SIZE = 1.0f / 16.0f;
@@ -227,7 +227,7 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(density_fn);
+	mVAO = createSphereBuffer(distanceToSphere);
 
 
 	unsigned int texture;
@@ -242,7 +242,7 @@ int main() {
 	unsigned char *data = stbi_load("sand_col.jpg", &width, &height, &nrChannels, 0);
 	if (data)
 	{
-    	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     	glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
@@ -278,6 +278,9 @@ int main() {
 		shader.setMat4("view", view);
 
 		shader.setVec3("viewPos", camera.Position);
+
+		glm::vec3 lightPos = glm::vec3(10.0,10.0,1.0);
+		shader.setVec3("lightPos", lightPos);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);

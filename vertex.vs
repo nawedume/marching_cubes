@@ -8,6 +8,7 @@ out vec3 vWorldPos;
 out vec3 Norms;
 out vec2 textcoord;
 
+
 uniform mat4 projection;
 uniform mat4 view;
 

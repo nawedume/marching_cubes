@@ -6,28 +6,38 @@ in vec2 textcoord;
 
 uniform vec3 viewPos;
 uniform sampler2D ourTexture;
-
+uniform vec3 lightPos;
 out vec4 FragColor;
 
-void main() {
-	vec3 color = vec3(1.0,1.0,1.0);
-	vec3 lightDir = normalize(vec3(0.0,-1.0,-1.0));
-	vec3 lightColor = vec3(1.0,1.0,1.0);
 
-	vec3 norm = normalize(Norms);
-	float diff = max(dot(norm,lightDir), 0.0);
-	vec3 ds = diff * lightColor;
-
-	float ambientStrength = 0.1;
-	vec3 ambience = ambientStrength*lightColor;
+vec3 BlinPhong(vec3 viewPos, vec3 normal, vec3 fragPos, vec3 lightPos, vec3 lightColor)
+{
+	//diffuse
+	vec3 lightDir = normalize(lightPos - fragPos);
+	float diff = max(dot(lightDir, normal), 0.0);
+	vec3 diffuse = diff*lightColor;
 
 	// specular
-    float specularStrength = 0.5;
-    vec3 viewDir = normalize(viewPos - vWorldPos);
-    vec3 reflectDir = reflect(-lightDir, norm);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    vec3 specular = specularStrength * spec * lightColor;  
+	vec3 viewDir = normalize(viewPos - fragPos);
+	float spec = 0.0;
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	spec = pow(max(dot(normal, halfwayDir), 0.0), 0.2);
+	vec3 specular = spec * lightColor;
 
-	color = color * (ds + ambience + specular);
-	FragColor = texture(ourTexture, textcoord * 0.2) * clamp(vec4(color, 1.0),0.0, 1.0);
+	// simple attenuation
+	float distance = length(lightPos - fragPos);
+	float attenuation = 1.0 / (distance);
+
+	diffuse *= attenuation;
+	specular *= attenuation;
+
+	return diffuse + specular;  
+}
+
+void main() {
+	vec3 color = texture(ourTexture, textcoord).rgb;
+	vec3 lighting = BlinPhong(viewPos, normalize(Norms), vWorldPos, lightPos, vec3(1.0));
+	color *= lighting;
+	color = pow(color, vec3(1.0/2.2));
+	FragColor = vec4(color, 1.0);
 }
