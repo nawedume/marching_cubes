@@ -21,7 +21,7 @@ vec3 BlinPhong(vec3 viewPos, vec3 normal, vec3 fragPos, vec3 lightPos, vec3 ligh
 	vec3 viewDir = normalize(viewPos - fragPos);
 	float spec = 0.0;
 	vec3 halfwayDir = normalize(lightDir + viewDir);
-	spec = pow(max(dot(normal, halfwayDir), 0.0), 0.2);
+	spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
 	vec3 specular = spec * lightColor;
 
 	// simple attenuation
@@ -36,8 +36,18 @@ vec3 BlinPhong(vec3 viewPos, vec3 normal, vec3 fragPos, vec3 lightPos, vec3 ligh
 
 void main() {
 	vec3 color = texture(ourTexture, textcoord).rgb;
-	vec3 lighting = BlinPhong(viewPos, normalize(Norms), vWorldPos, lightPos, vec3(1.0));
-	color *= lighting;
-	color = pow(color, vec3(1.0/2.2));
-	FragColor = vec4(color, 1.0);
+	//vec3 lighting = BlinPhong(viewPos, normalize(Norms), vWorldPos, lightPos, vec3(1.0));
+	//color *= lighting;
+	//color = pow(color, vec3(1.0/2.2));
+    vec3 ambient = 0.05 * color;
+    // diffuse
+    vec3 lightDir = normalize(lightPos - vWorldPos);
+	vec3 normal = normalize(Norms);
+	vec3 viewDir = normalize(viewPos - vWorldPos);
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	float diff = max(dot(lightDir, normal), 0.0);
+    vec3 diffuse = diff * color; 
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), 2.0);
+	vec3 specular = vec3(0.3) * spec; // assuming bright white light color
+	FragColor = vec4(ambient + diffuse + specular, 1.0);
 }

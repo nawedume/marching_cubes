@@ -28,7 +28,7 @@ const unsigned int SCR_HEIGHT = 600;
 const float X_MIN = -5.0f;
 const float X_MAX = 5.0f;
 const float Y_MIN = -1.0f;
-const float Y_MAX = 5.0f;
+const float Y_MAX = 1.0f;
 const float Z_MIN = -5.0f;
 const float Z_MAX = 5.0f;
 
@@ -227,7 +227,7 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(distanceToSphere);
+	mVAO = createSphereBuffer(density_fn);
 
 
 	unsigned int texture;
@@ -279,7 +279,7 @@ int main() {
 
 		shader.setVec3("viewPos", camera.Position);
 
-		glm::vec3 lightPos = glm::vec3(10.0,10.0,1.0);
+		glm::vec3 lightPos = glm::vec3(sin(glfwGetTime())*10,10.0,sin(glfwGetTime()));
 		shader.setVec3("lightPos", lightPos);
 
 		glActiveTexture(GL_TEXTURE0);
