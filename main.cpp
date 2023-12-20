@@ -105,13 +105,16 @@ float distanceToSphere(glm::vec3 vertex) {
 	return 0.5f - glm::length(vertex);
 };
 
+float getSphereVal(glm::vec3 p) {
+	return 1;
+}
+
 glm::vec3 getNormal(glm::vec3 p, float (*f)(glm::vec3)) {
-	const float eps = 1.0f;
     const glm::vec2 k = glm::vec2(1.0f,-1.0f);
-	return (k.xyy()*f(p + k.xyy()*UNIT_SIZE*eps)+
-						k.yyx()*f(p + k.yyx()*UNIT_SIZE*eps) +
-						k.yxy()*f(p + k.yxy()*UNIT_SIZE*eps) +
-						k.xxx()*f(p + k.xxx()*UNIT_SIZE*eps));
+	return (k.xyy()*f(p + k.xyy()*UNIT_SIZE)+
+						k.yyx()*f(p + k.yyx()*UNIT_SIZE) +
+						k.yxy()*f(p + k.yxy()*UNIT_SIZE) +
+						k.xxx()*f(p + k.xxx()*UNIT_SIZE));
 }
 
 
@@ -227,7 +230,7 @@ int main() {
 	}
 	gen_table();
 
-	mVAO = createSphereBuffer(density_fn);
+	mVAO = createSphereBuffer(distanceToSphere);
 
 
 	unsigned int texture;
@@ -242,7 +245,7 @@ int main() {
 	unsigned char *data = stbi_load("sand_col.jpg", &width, &height, &nrChannels, 0);
 	if (data)
 	{
-    	glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     	glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else
@@ -279,7 +282,7 @@ int main() {
 
 		shader.setVec3("viewPos", camera.Position);
 
-		glm::vec3 lightPos = glm::vec3(sin(glfwGetTime())*10,10.0,sin(glfwGetTime()));
+		glm::vec3 lightPos = -glm::vec3(10.0f,10.0f,0.0f);
 		shader.setVec3("lightPos", lightPos);
 
 		glActiveTexture(GL_TEXTURE0);
