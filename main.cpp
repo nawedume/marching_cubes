@@ -140,20 +140,85 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
 					}
 					curr_vertex = curr_vertex << 1;
 				}
-				std::vector<float> unitVertices = getInterpolatedVertices(code, corner_values);
+				glm::mat4 transform = translate*scale;
+				std::vector<glm::vec3> unitVertices = getInterpolatedVertices(code, corner_values);
 				if (code != 0) {
 					for (int i=0; i < unitVertices.size(); i+=3) {
-						glm::vec3 v(unitVertices[i], unitVertices[i+1], unitVertices[i+2]);
-						glm::vec4 tri_v = translate*scale*glm::vec4(unitVertices[i], unitVertices[i+1], unitVertices[i+2], 1.0f);
-						glm::vec3 norms = getNormal(tri_v, f);
-						vertices.push_back(tri_v.x);
-						vertices.push_back(tri_v.y);
-						vertices.push_back(tri_v.z);
-						vertices.push_back(norms.x);
-						vertices.push_back(norms.y);
-						vertices.push_back(norms.z);
-						vertices.push_back(tri_v.x-X_MIN);
-						vertices.push_back(tri_v.z-Z_MIN);
+						glm::vec4 v1 = transform*glm::vec4(unitVertices[i], 1.0f);
+						glm::vec4 v2 = transform*glm::vec4(unitVertices[i+1], 1.0f);
+						glm::vec4 v3 = transform*glm::vec4(unitVertices[i+2], 1.0f);
+
+						glm::vec4 tri_v1 = transform*glm::vec4(unitVertices[i], 1.0f);
+						glm::vec4 tri_v2 = transform*glm::vec4(unitVertices[i+1], 1.0f);
+						glm::vec4 tri_v3 = transform*glm::vec4(unitVertices[i+2], 1.0f);
+
+						glm::vec2 uv1 = glm::vec2(tri_v1.x-X_MIN, tri_v1.z-Z_MIN);
+						glm::vec2 uv2 = glm::vec2(tri_v2.x-X_MIN, tri_v2.z-Z_MIN);
+						glm::vec2 uv3 = glm::vec2(tri_v3.x-X_MIN, tri_v3.z-Z_MIN);
+
+
+						glm::vec3 norm1 = getNormal(tri_v1, f);
+						glm::vec3 norm2 = getNormal(tri_v2, f);
+						glm::vec3 norm3 = getNormal(tri_v3, f);
+
+						glm::vec3 e1 = v2 - v1;
+						glm::vec3 e2 = v3 - v2;
+
+						glm::vec2 duv1 = uv2 - uv1;
+						glm::vec2 duv2 = uv3 - uv2;
+
+						float det = 1.0f / (uv1.x*uv2.y - uv1.y*uv2.x);
+
+						glm::vec3 tangent;
+
+						tangent.x = e1.x*uv2.y - e1.x*uv1.y;
+						tangent.y = e1.y*uv2.y - e1.y*uv1.y;
+						tangent.z = e1.z*uv2.y - e1.z*uv1.y;
+
+						vertices.push_back(tri_v1.x);
+						vertices.push_back(tri_v1.y);
+						vertices.push_back(tri_v1.z);
+						
+						vertices.push_back(norm1.x);
+						vertices.push_back(norm1.y);
+						vertices.push_back(norm1.z);
+
+						vertices.push_back(tri_v1.x);
+						vertices.push_back(tri_v1.z);
+
+						vertices.push_back(tangent.x);
+						vertices.push_back(tangent.y);
+						vertices.push_back(tangent.z);
+
+						vertices.push_back(tri_v2.x);
+						vertices.push_back(tri_v2.y);
+						vertices.push_back(tri_v2.z);
+						
+						vertices.push_back(norm2.x);
+						vertices.push_back(norm2.y);
+						vertices.push_back(norm2.z);
+
+						vertices.push_back(tri_v2.x);
+						vertices.push_back(tri_v2.z);
+
+						vertices.push_back(tangent.x);
+						vertices.push_back(tangent.y);
+						vertices.push_back(tangent.z);
+
+						vertices.push_back(tri_v3.x);
+						vertices.push_back(tri_v3.y);
+						vertices.push_back(tri_v3.z);
+						
+						vertices.push_back(norm3.x);
+						vertices.push_back(norm3.y);
+						vertices.push_back(norm3.z);
+
+						vertices.push_back(tri_v3.x);
+						vertices.push_back(tri_v3.z);
+
+						vertices.push_back(tangent.x);
+						vertices.push_back(tangent.y);
+						vertices.push_back(tangent.z);
 					}
 				}
 			}
@@ -170,13 +235,16 @@ GLuint createSphereBuffer(float (*f)(glm::vec3)) {
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(sizeof(float)*3));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)(sizeof(float)*3));
     glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(sizeof(float)*6));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)(sizeof(float)*6));
+    glEnableVertexAttribArray(2);
+
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11*sizeof(float), (void*)(sizeof(float)*8));
     glEnableVertexAttribArray(2);
 
 	return VAO;
@@ -199,7 +267,7 @@ GLuint mVAO;
 int main() {
 	// replace with time if needed
 	srand(123);
-  init_grad_vecs(123);
+	init_grad_vecs(123);
 	
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -254,6 +322,25 @@ int main() {
 	}
 	stbi_image_free(data);
 
+	unsigned int texture2;
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	data = stbi_load("sand_norm.jpg", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+    	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    	glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+    	std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -282,11 +369,15 @@ int main() {
 
 		shader.setVec3("viewPos", camera.Position);
 
-		glm::vec3 lightPos = -glm::vec3(10.0f,10.0f,0.0f);
-		shader.setVec3("lightPos", lightPos);
+		glm::vec3 lightDir = glm::vec3(1.0f,1.0f,0.0f);
+		shader.setVec3("lightDir", lightDir);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+
+		shader.setInt("ourTexture2", 1);
 		
 		
         shader.use();

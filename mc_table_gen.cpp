@@ -178,13 +178,13 @@ uint8_t vertex_map[256] {};
 */
 uint8_t rotation_map[256][3] {};
 
-std::vector<float> getInterpolatedVertices(uint8_t code, float* corner_values)
+std::vector<glm::vec3> getInterpolatedVertices(uint8_t code, float* corner_values)
 {
     uint8_t base_case_index = vertex_map[code];
     uint8_t vertex_count = base_triangulations_count[base_case_index];
     uint8_t* edges = triangulations[code];
 
-    std::vector<float> vertices;
+    std::vector<glm::vec3> vertices;
     for (int i = 0; i < vertex_count; i++)
     {
         uint8_t edge = edges[i];
@@ -194,9 +194,8 @@ std::vector<float> getInterpolatedVertices(uint8_t code, float* corner_values)
         float d = val1 / (val1 + val2);
 
         glm::vec3 finalVec = (corner_vertices[corners[0]] * (1 - d)) + (corner_vertices[corners[1]] * d);
-        vertices.push_back(finalVec.x);
-        vertices.push_back(finalVec.y);
-        vertices.push_back(finalVec.z);
+        vertices.push_back(finalVec);
+
     }
     return vertices;
 }
